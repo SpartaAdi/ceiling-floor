@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-brand: #0A2540;
+  --color-brand-2: #1A3A5C;
+  --color-accent: #F9C642;
+  --color-ink: #333333;
+  --color-paper: #F5F5F5;
+  --color-night: #06182B;
+  --color-night-card: #0E2440;
+  --color-night-line: #1A3A5C;
+  --color-ceiling: #10B981;
+  --color-floor: #F59E0B;
+  --color-miss: #F43F5E;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", Roboto, sans-serif;
+  --font-mono: "SF Mono", ui-monospace, Menlo, monospace;
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-paper text-ink antialiased dark:bg-night dark:text-slate-100;
+    overscroll-behavior-y: none;
+  }
+  button {
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  input, select, textarea {
+    font-size: 16px; /* prevent iOS zoom on focus */
+  }
+}
+
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+.animate-sheet { animation: sheet-up 0.24s cubic-bezier(0.2, 0.9, 0.3, 1); }
+.animate-fade { animation: fade-in 0.2s ease-out; }
+.animate-pop { animation: pop 0.22s ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-sheet, .animate-fade, .animate-pop { animation: none; }
+  html { scroll-behavior: auto !important; }
+}
