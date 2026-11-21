@@ -128,7 +128,7 @@ export function Timeline({ date, day, blocks, now, live }: { date: string; day?:
   const eveningOpen = data.habits.filter((h) => h.kind === 'daily' && h.evening && !day?.habits[h.id])
 
   return (
-    <ol ref={listRef} className="flex flex-col gap-2">
+    <ol ref={listRef} aria-label="Timeline" className="flex flex-col gap-2">
       {blocks.map((b) => {
         const status = day ? effectiveStatus(day, b.id) : undefined
         const isNow = b.id === current?.id
@@ -150,7 +150,7 @@ export function Timeline({ date, day, blocks, now, live }: { date: string; day?:
             }}
             extra={
               showCare && (
-                <div className="mx-4 flex flex-wrap items-center gap-2 rounded-b-2xl border border-t-0 border-slate-200/80 bg-slate-50 px-3 py-2 dark:border-night-line dark:bg-night">
+                <div role="group" aria-label="Still open habits" className="mx-4 flex flex-wrap items-center gap-2 rounded-b-2xl border border-t-0 border-slate-200/80 bg-slate-50 px-3 py-2 dark:border-night-line dark:bg-night">
                   <span className="text-[11px] font-semibold uppercase tracking-wider text-floor">Still open</span>
                   {eveningOpen.map((h) => (
                     <HabitPill key={h.id} label={h.label} done={false} nudge compact onToggle={() => toggleHabit(date, h.id)} />

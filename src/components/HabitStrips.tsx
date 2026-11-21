@@ -61,7 +61,7 @@ export function EssentialsStrip({ date, now, live }: { date: string; now: Date; 
           {done}/{habits.length}
         </span>
       </div>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+      <div role="group" aria-label="Daily essentials" className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {habits.map((h) => (
           <HabitPill key={h.id} label={h.label} done={!!day?.habits[h.id]} nudge={nudged(h)} onToggle={() => toggleHabit(date, h.id)} />
         ))}
@@ -82,7 +82,7 @@ export function CareStrip({ date, always = false }: { date: string; always?: boo
       <p className="mb-2 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
         <Sparkles size={12} /> Weekend Care • 1x/week
       </p>
-      <div className="grid grid-cols-2 gap-2">
+      <div role="group" aria-label="Weekend care" className="grid grid-cols-2 gap-2">
         {habits.map((h) => {
           const doneOn = week?.care[h.id]
           return <HabitPill key={h.id} label={h.label} done={!!doneOn} sub={doneOn ? undefined : '0/1'} onToggle={() => toggleCare(doneOn ?? date, h.id)} />

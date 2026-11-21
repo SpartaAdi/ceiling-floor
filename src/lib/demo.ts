@@ -1,4 +1,4 @@
-import type { AppData, BlockStatus, DayLog, DayMode } from '../types'
+import type { AppData, BlockStatus, DayLog, DayMode, Goal } from '../types'
 import { addDays, fromKey, templateFor, weekStartOf } from './time'
 
 export const DEMO_DAYS = 42
@@ -75,6 +75,42 @@ export function withDemoData(data: AppData, todayKey: string): AppData {
     if (dow === 6 && rand() < 0.8) week.care.besan = key
     if (dow === 0 && rand() < 0.7) week.care.oiling = key
   }
+  // Sample goals across areas
+  const start = addDays(todayKey, -DEMO_DAYS)
+  const monthKey = todayKey.slice(0, 8) + '01'
+  const goals: Goal[] = [
+    { id: 'demo-g1', facet: 'deep', title: 'Deep work 20h', kind: 'hours', target: 20, period: 'week', createdAt: start, demo: true },
+    { id: 'demo-g2', facet: 'fitness', title: 'Gym 5x', kind: 'sessions', target: 5, period: 'week', createdAt: start, demo: true },
+    { id: 'demo-g3', facet: 'nutrition', title: 'Eat right 6 days', kind: 'habit', habitId: 'eatright', target: 6, period: 'week', createdAt: start, demo: true },
+    { id: 'demo-g4', facet: 'learning', title: 'Finish 2 books', kind: 'manual', target: 2, period: 'month', manual: { [monthKey]: 1 }, createdAt: start, demo: true },
+    { id: 'demo-g5', facet: 'mind', title: 'Meditate 24 days', kind: 'sessions', target: 24, period: 'month', createdAt: start, demo: true },
+  ]
+  next.goals = [...next.goals.filter((g) => !g.demo), ...goals]
+
+  // Past weekly reviews + this week's priorities
+  const thisWeek = weekStartOf(todayKey)
+  for (let w = 1; w <= 5; w++) {
+    const ws = addDays(thisWeek, -7 * w)
+    const week = (next.weeks[ws] ??= { weekStart: ws, care: {} })
+    if (w === 1 || week.review) continue // leave last week unreviewed so the nudge shows; never overwrite real reviews
+    week.review = {
+      rating: 3 + Math.round(rand()),
+      wentWell: pick(WINS),
+      blockers: pick(MISS_REASONS),
+      change: pick(LESSONS),
+      completedAt: fromKey(addDays(ws, 6)).getTime(),
+      demo: true,
+    }
+  }
+  const tw = (next.weeks[thisWeek] ??= { weekStart: thisWeek, care: {} })
+  tw.plan ??= {
+    priorities: [
+      { facet: 'deep', note: 'Ship GoML module' },
+      { facet: 'learning', note: 'Read 20 min daily' },
+    ],
+    demo: true,
+  }
+
   next.settings.demoLoaded = true
   return next
 }
@@ -82,6 +118,11 @@ export function withDemoData(data: AppData, todayKey: string): AppData {
 export function withoutDemoData(data: AppData): AppData {
   const next: AppData = structuredClone(data)
   for (const [k, d] of Object.entries(next.days)) if (d.demo) delete next.days[k]
+  next.goals = next.goals.filter((g) => !g.demo)
+  for (const w of Object.values(next.weeks)) {
+    if (w.review?.demo) delete w.review
+    if (w.plan?.demo) delete w.plan
+  }
   next.settings.demoLoaded = false
   return next
 }

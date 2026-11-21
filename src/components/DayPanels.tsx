@@ -19,7 +19,7 @@ export function NowNext({ blocks, now, focus }: { blocks: Block[]; now: Date; fo
   const cur = blocks.find((b) => m >= toMin(b.start) && m < toMin(b.end, true))
   const next = blocks.find((b) => toMin(b.start) > m)
   return (
-    <section className="overflow-hidden rounded-2xl bg-brand text-white shadow-lg shadow-brand/20 dark:bg-brand-2">
+    <section aria-label="Now and next" className="overflow-hidden rounded-2xl bg-brand text-white shadow-lg shadow-brand/20 dark:bg-brand-2">
       {focus && (
         <div className="flex items-center gap-2 border-b border-white/10 bg-white/5 px-4 py-2 text-xs">
           <Crosshair size={14} className="shrink-0 text-accent" />
@@ -189,7 +189,8 @@ const SHORTCUTS: [string[], string][] = [
   [['M'], 'Miss day'],
   [['←', '→'], 'Previous • Next day'],
   [['T'], 'Jump to today'],
-  [['1', '2', '3', '4'], 'Today • Dashboard • Routine • Settings'],
+  [['1', '2', '3'], 'Today • Dashboard • Goals'],
+  [['4', '5', '6'], 'Review • Routine • Settings'],
   [['?'], 'Show shortcuts'],
 ]
 

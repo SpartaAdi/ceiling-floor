@@ -68,6 +68,7 @@ export function normalize(input: unknown): AppData {
     habits: Array.isArray(input.habits) ? (input.habits as AppData['habits']) : base.habits,
     days: isObj(input.days) ? (input.days as AppData['days']) : {},
     weeks: isObj(input.weeks) ? (input.weeks as AppData['weeks']) : {},
+    goals: Array.isArray(input.goals) ? (input.goals as AppData['goals']) : [],
     settings: {
       ...base.settings,
       ...(settingsIn as Partial<AppData['settings']>),

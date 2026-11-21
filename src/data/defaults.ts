@@ -99,6 +99,7 @@ export const createDefaultData = (): AppData => ({
   habits: defaultHabits(),
   days: {},
   weeks: {},
+  goals: [],
   settings: defaultSettings(),
 })
 

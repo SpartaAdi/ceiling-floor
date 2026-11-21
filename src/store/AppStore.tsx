@@ -1,8 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import type { AppData, Block, BlockStatus, DayLog, DayMode, FacetId, Habit, Reflection, TemplateKey, Targets, Theme } from '../types'
+import type { AppData, Block, BlockStatus, DayMode, FacetId, Goal, Habit, Reflection, TemplateKey, Targets, Theme, WeekPriority, WeekReview } from '../types'
 import { createDefaultData, defaultHabits, defaultTemplates } from '../data/defaults'
 import { storage } from '../services/storageService'
 import { templateFor, toKey, toMin, weekStartOf } from '../lib/time'
+import { applyDayMode, ensureDay, ensureSnapshot, resetDayLog } from '../lib/dayLogic'
+import { periodFor } from '../lib/goals'
 import { withDemoData, withoutDemoData } from '../lib/demo'
 
 type Draft = (d: AppData) => void
@@ -22,6 +24,12 @@ interface Store {
   setEnergy: (date: string, energy: number | undefined) => void
   setReflection: (date: string, field: keyof Reflection, text: string) => void
   setFacetTarget: (id: FacetId, hours: number | undefined) => void
+  upsertGoal: (goal: Goal) => void
+  deleteGoal: (id: string) => void
+  setGoalArchived: (id: string, archived: boolean) => void
+  bumpGoal: (id: string, ref: string, delta: number) => void
+  setReview: (ws: string, patch: Partial<WeekReview>) => void
+  setPriorities: (ws: string, priorities: WeekPriority[]) => void
   setMissReason: (date: string, reason: string) => void
   toggleHabit: (date: string, habitId: string) => void
   toggleCare: (date: string, habitId: string) => void
@@ -42,9 +50,6 @@ interface Store {
 const Ctx = createContext<Store | null>(null)
 
 const sortBlocks = (b: Block[]) => [...b].sort((x, y) => toMin(x.start) - toMin(y.start))
-
-const ensureDay = (d: AppData, date: string): DayLog =>
-  (d.days[date] ??= { date, blocks: [], statuses: {}, habits: {}, updatedAt: Date.now() })
 
 export function AppStoreProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<AppData>(createDefaultData)
@@ -86,17 +91,6 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   )
 
   const store = useMemo<Store>(() => {
-    /** Snapshot the ceiling preview so pre-mode logs have something to attach to. */
-    const ensureSnapshot = (d: AppData, date: string) => {
-      const day = ensureDay(d, date)
-      if (!day.blocks.length) {
-        const tk = templateFor(date, 'ceiling')
-        day.blocks = structuredClone(d.templates[tk])
-        day.template = tk
-      }
-      return day
-    }
-
     return {
       data,
       ready,
@@ -104,32 +98,9 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       notify,
       previewBlocks,
 
-      setDayMode: (date, mode) =>
-        mutate((d) => {
-          const day = ensureDay(d, date)
-          const tk = templateFor(date, mode)
-          // Keep catch-up logs if they were made against the same template before a mode was picked
-          const keep = !day.mode && day.template === tk ? day.statuses : {}
-          day.blocks = structuredClone(d.templates[tk])
-          day.template = tk
-          day.mode = mode
-          const fill: BlockStatus = mode === 'miss' ? 'missed' : 'completed'
-          day.statuses = Object.fromEntries(day.blocks.map((b) => [b.id, keep[b.id] ?? fill]))
-          if (mode !== 'miss') delete day.missReason
-          day.updatedAt = Date.now()
-        }),
+      setDayMode: (date, mode) => mutate((d) => applyDayMode(d, date, mode)),
 
-      resetDay: (date) =>
-        mutate((d) => {
-          const day = d.days[date]
-          if (!day) return
-          day.mode = undefined
-          day.template = undefined
-          day.blocks = []
-          day.statuses = {}
-          delete day.missReason
-          day.updatedAt = Date.now()
-        }),
+      resetDay: (date) => mutate((d) => resetDayLog(d, date)),
 
       setBlockStatus: (date, blockId, status) =>
         mutate((d) => {
@@ -175,6 +146,47 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         mutate((d) => {
           if (hours === undefined) delete d.settings.facetTargets[id]
           else d.settings.facetTargets[id] = Math.max(0, Math.round(hours * 2) / 2)
+        }),
+
+      upsertGoal: (goal) =>
+        mutate((d) => {
+          const i = d.goals.findIndex((g) => g.id === goal.id)
+          if (i >= 0) d.goals[i] = goal
+          else d.goals.push(goal)
+        }),
+
+      deleteGoal: (id) =>
+        mutate((d) => {
+          d.goals = d.goals.filter((g) => g.id !== id)
+        }),
+
+      setGoalArchived: (id, archived) =>
+        mutate((d) => {
+          const g = d.goals.find((x) => x.id === id)
+          if (g) g.archived = archived || undefined
+        }),
+
+      bumpGoal: (id, ref, delta) =>
+        mutate((d) => {
+          const g = d.goals.find((x) => x.id === id)
+          if (!g) return
+          const key = periodFor(g, ref).key
+          const m = (g.manual ??= {})
+          m[key] = Math.max(0, (m[key] ?? 0) + delta)
+        }),
+
+      setReview: (ws, patch) =>
+        mutate((d) => {
+          const week = (d.weeks[ws] ??= { weekStart: ws, care: {} })
+          const r = { ...week.review, ...patch }
+          for (const k of Object.keys(r) as (keyof WeekReview)[]) if (r[k] === undefined || r[k] === '') delete r[k]
+          week.review = r
+        }),
+
+      setPriorities: (ws, priorities) =>
+        mutate((d) => {
+          const week = (d.weeks[ws] ??= { weekStart: ws, care: {} })
+          week.plan = { priorities: priorities.slice(0, 3) }
         }),
 
       setMissReason: (date, reason) =>

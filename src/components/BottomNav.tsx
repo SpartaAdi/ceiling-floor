@@ -7,7 +7,7 @@ export function BottomNav({ tab, onChange }: { tab: Tab; onChange: (t: Tab) => v
       aria-label="Main"
       className="fixed inset-x-0 bottom-0 z-40 border-t md:hidden border-slate-200/80 bg-white/95 pb-safe backdrop-blur-md dark:border-night-line dark:bg-night-card/95"
     >
-      <div className="mx-auto grid max-w-[480px] grid-cols-4">
+      <div className="mx-auto grid max-w-[480px] grid-cols-6">
         {TABS.map(({ id, label, Icon }) => {
           const active = id === tab
           return (

@@ -183,9 +183,8 @@ export function buildInsights(p: {
   const prev = prevDays && prevDays.some((d) => d.mode) ? computeFacets(data, prevDays) : null
   const logged = days.filter((d) => d.mode).length
 
-  if (logged < 3) {
-    out.push({ tone: 'info', title: 'Log a few more days', sub: 'Insights sharpen after 3+ days', weight: 1 })
-  }
+  // Too little data for trustworthy verdicts
+  if (logged < 3) return [{ tone: 'info', title: 'Log a few more days', sub: `${logged}/3 days logged • Insights unlock at 3`, weight: 1 }]
 
   for (const f of FACETS) {
     const s = cur[f.id]

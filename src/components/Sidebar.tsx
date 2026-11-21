@@ -1,15 +1,17 @@
-import { CalendarCheck, Keyboard, LayoutDashboard, ListTodo, Monitor, Moon, Settings, Sun } from 'lucide-react'
+import { CalendarCheck, ClipboardCheck, Keyboard, LayoutDashboard, ListTodo, Monitor, Moon, Settings, Sun, Target } from 'lucide-react'
 import type { Theme } from '../types'
 import { useStore } from '../store/AppStore'
 import { cx } from './ui'
 
-export type Tab = 'today' | 'dashboard' | 'routine' | 'settings'
+export type Tab = 'today' | 'dashboard' | 'goals' | 'review' | 'routine' | 'settings'
 
 export const TABS: { id: Tab; label: string; sub: string; key: string; Icon: typeof CalendarCheck }[] = [
   { id: 'today', label: 'Today', sub: 'Plan • Log', key: '1', Icon: CalendarCheck },
   { id: 'dashboard', label: 'Dashboard', sub: 'Progress • Insights', key: '2', Icon: LayoutDashboard },
-  { id: 'routine', label: 'Routine', sub: 'Templates • Habits', key: '3', Icon: ListTodo },
-  { id: 'settings', label: 'Settings', sub: 'Targets • Backup', key: '4', Icon: Settings },
+  { id: 'goals', label: 'Goals', sub: 'Targets per area', key: '3', Icon: Target },
+  { id: 'review', label: 'Review', sub: 'Weekly reflection', key: '4', Icon: ClipboardCheck },
+  { id: 'routine', label: 'Routine', sub: 'Templates • Habits', key: '5', Icon: ListTodo },
+  { id: 'settings', label: 'Settings', sub: 'Targets • Backup', key: '6', Icon: Settings },
 ]
 
 function Logo() {
@@ -30,7 +32,17 @@ const THEMES: { value: Theme; Icon: typeof Sun; label: string }[] = [
   { value: 'system', Icon: Monitor, label: 'System' },
 ]
 
-export function Sidebar({ tab, onChange, onShortcuts }: { tab: Tab; onChange: (t: Tab) => void; onShortcuts: () => void }) {
+export function Sidebar({
+  tab,
+  onChange,
+  onShortcuts,
+  badges = {},
+}: {
+  tab: Tab
+  onChange: (t: Tab) => void
+  onShortcuts: () => void
+  badges?: Partial<Record<Tab, string>>
+}) {
   const { data, setTheme } = useStore()
   return (
     <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col bg-brand px-3 py-5 text-white md:flex">
@@ -61,7 +73,11 @@ export function Sidebar({ tab, onChange, onShortcuts }: { tab: Tab; onChange: (t
                 <span className="block text-sm font-semibold">{label}</span>
                 <span className="block truncate text-[11px] text-white/40">{sub}</span>
               </span>
-              <span className="font-mono text-[10px] text-white/30 opacity-0 transition-opacity group-hover:opacity-100">{key}</span>
+              {badges[id] ? (
+                <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-bold text-brand">{badges[id]}</span>
+              ) : (
+                <span className="font-mono text-[10px] text-white/30 opacity-0 transition-opacity group-hover:opacity-100">{key}</span>
+              )}
             </button>
           )
         })}

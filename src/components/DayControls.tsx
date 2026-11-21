@@ -54,6 +54,7 @@ export function ModeTiles({ date, day, showKeys = true }: { date: string; day?: 
               key={m}
               role="radio"
               aria-checked={active}
+              aria-label={`${t.label} • ${t.sub}${blocks !== null ? ` • ${blocks} blocks` : ''} • key ${t.key}`}
               onClick={() => !active && setDayMode(date, m)}
               className={cx(
                 'relative flex min-h-[96px] flex-col items-start justify-between rounded-2xl border-2 p-3 text-left transition-all active:scale-[0.98]',

@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react'
-import { CalendarDays, ChevronLeft, ChevronRight, Clock } from 'lucide-react'
+import { CalendarDays, ChevronLeft, ChevronRight, ClipboardCheck, Clock, Flag } from 'lucide-react'
+import { FACET_BY_ID } from '../lib/facets'
 import { useDayView, useStore } from '../store/AppStore'
 import { addDays, dayTypeOf, fmtTime, fromKey, toKey, weekStartOf } from '../lib/time'
 import { summarizeWeek } from '../lib/stats'
@@ -18,13 +19,26 @@ const isTyping = (e: KeyboardEvent) => {
   return !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)
 }
 
-export function DayScreen({ now, date, setDate }: { now: Date; date: string; setDate: (d: string) => void }) {
+export function DayScreen({
+  now,
+  date,
+  setDate,
+  reviewDue,
+  onOpenReview,
+}: {
+  now: Date
+  date: string
+  setDate: (d: string) => void
+  reviewDue: string | null
+  onOpenReview: (ws: string) => void
+}) {
   const { data, setDayMode } = useStore()
   const today = toKey(now)
   const isToday = date === today
   const week = useMemo(() => summarizeWeek(data, weekStartOf(date), today), [data, date, today])
   const { day, blocks, isPreview, template } = useDayView(date)
   const yesterdayFocus = data.days[addDays(today, -1)]?.reflection?.focus
+  const priorities = data.weeks[weekStartOf(date)]?.plan?.priorities ?? []
 
   // Desktop keyboard shortcuts
   useEffect(() => {
@@ -96,11 +110,50 @@ export function DayScreen({ now, date, setDate }: { now: Date; date: string; set
         }
       />
 
+      {reviewDue && isToday && (
+        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-2xl border-2 border-accent bg-accent/15 px-4 py-3">
+          <ClipboardCheck size={20} className="text-brand dark:text-accent" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-bold text-brand dark:text-white">Weekly review due</p>
+            <p className="text-xs text-slate-600 dark:text-slate-300">Week of {fromKey(reviewDue).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })} • 10 minutes • Plan next week</p>
+          </div>
+          <button
+            onClick={() => onOpenReview(reviewDue)}
+            className="h-10 rounded-xl bg-brand px-4 text-sm font-semibold text-white hover:bg-brand-2 dark:bg-accent dark:text-brand"
+          >
+            Start review
+          </button>
+        </div>
+      )}
+
       <WeekBar week={week} targets={data.settings.targets} selected={date} onSelect={setDate} />
 
       <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-[minmax(360px,420px)_minmax(0,1fr)]">
         {/* Left: decide + habits + reflect */}
         <div className="flex flex-col gap-5">
+          {priorities.length > 0 && (
+            <Card>
+              <div className="mb-2.5 flex items-center gap-2">
+                <Flag size={15} className="text-accent" />
+                <h2 className="text-[15px] font-semibold text-brand dark:text-white">Week Priorities</h2>
+                <span className="text-xs text-slate-400">From your review</span>
+              </div>
+              <ul className="flex flex-col gap-2">
+                {priorities.map((p) => {
+                  const f = FACET_BY_ID[p.facet]
+                  return (
+                    <li key={p.facet} className="flex items-center gap-2.5 text-sm">
+                      <span className="flex size-7 shrink-0 items-center justify-center rounded-lg" style={{ background: `${f.color}1A`, color: f.color }}>
+                        <f.Icon size={14} />
+                      </span>
+                      <span className="font-semibold text-brand dark:text-white">{f.label}</span>
+                      {p.note && <span className="truncate text-slate-500 dark:text-slate-400">• {p.note}</span>}
+                    </li>
+                  )
+                })}
+              </ul>
+            </Card>
+          )}
           <Card>
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-[15px] font-semibold text-brand dark:text-white">How did {isToday ? 'today' : 'this day'} go?</h2>

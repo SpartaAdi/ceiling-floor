@@ -65,10 +65,56 @@ export interface DayLog {
   demo?: boolean
 }
 
+export interface WeekReview {
+  /** 1–5 overall week rating */
+  rating?: number
+  wentWell?: string
+  blockers?: string
+  change?: string
+  completedAt?: number
+  demo?: boolean
+}
+
+export interface WeekPriority {
+  facet: FacetId
+  note: string
+}
+
+export interface WeekPlan {
+  /** Up to 3 focus areas for this week, set during the previous week's review */
+  priorities: WeekPriority[]
+  demo?: boolean
+}
+
 export interface WeekLog {
   weekStart: string // Monday YYYY-MM-DD
   /** weekly habit id -> date it was done */
   care: Record<string, string | undefined>
+  review?: WeekReview
+  plan?: WeekPlan
+}
+
+/** hours = facet time • sessions = days with a done facet block • habit = days a habit was kept • manual = you count */
+export type GoalKind = 'hours' | 'sessions' | 'habit' | 'manual'
+export type GoalPeriod = 'week' | 'month' | 'custom'
+
+export interface Goal {
+  id: string
+  facet: FacetId
+  title: string
+  kind: GoalKind
+  target: number
+  period: GoalPeriod
+  /** For kind = habit */
+  habitId?: string
+  /** For period = custom */
+  start?: string
+  end?: string
+  /** Manual progress keyed by period start date ('custom' for custom goals) */
+  manual?: Record<string, number>
+  createdAt: string
+  archived?: boolean
+  demo?: boolean
 }
 
 export interface Targets {
@@ -93,6 +139,7 @@ export interface AppData {
   habits: Habit[]
   days: Record<string, DayLog>
   weeks: Record<string, WeekLog>
+  goals: Goal[]
   settings: Settings
 }
 

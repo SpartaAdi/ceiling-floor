@@ -29,7 +29,7 @@ export function WeekBar({
   const hm = HEALTH_META[health]
   const over = week.floorLeft < 0
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 xl:flex-row xl:items-center dark:border-night-line dark:bg-night-card">
+    <section aria-label="Weekly budget" className="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 xl:flex-row xl:items-center dark:border-night-line dark:bg-night-card">
       <div className="flex flex-wrap items-center gap-4">
         <div className="min-w-[180px]">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Weekly Budget</p>

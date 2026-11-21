@@ -8,7 +8,17 @@ npm run dev       # http://localhost:5173
 npm run build     # type-check + production build (PWA service worker in dist/)
 npm run preview   # serve dist/
 npm run icons     # regenerate PWA icons in public/
+npm test          # unit tests (Vitest) for every algorithm
+npm run test:e2e  # end-to-end browser tests (Playwright, uses installed Google Chrome)
+npm run test:all  # unit tests → type-check + build → end-to-end
 ```
+
+## Pages
+- **Today**: day mode tiles, ✓/✕ per block, Now/Next, habits, time invested, check-in, week priorities, review nudge
+- **Dashboard**: life score, 8 life facets, insights, trends, goals, calendar, habit matrix, block report
+- **Goals**: weekly / monthly / dated targets per area, measured as hours, sessions, habit days or a manual count
+- **Review**: weekly scorecard vs last week, highlights, habits, reflection, and next week's priorities
+- **Routine** and **Settings**
 
 ## Structure
 - `src/types.ts`: data model (`AppData`, `DayLog` with block snapshots, `WeekLog` for 1x/week care)
@@ -18,10 +28,13 @@ npm run icons     # regenerate PWA icons in public/
 - `src/lib/stats.ts`: weekly budget, health badge, forecast, streaks, block report, habit matrix
 - `src/lib/facets.ts`: life facets (Deep Work, Fitness, Mindfulness, Reading, Family, Health & Care, Nutrition, Sleep) and weekly targets
 - `src/lib/insights.ts`: facet hours/scores, period-over-period change, weekly trends, rule-based insights
+- `src/lib/goals.ts` / `src/lib/review.ts`: goal measurement + pace, weekly review summary + due nudge
+- `src/lib/dayLogic.ts`: pure day-mode rules (auto-tick, catch-up preservation, reset)
+- `src/lib/__tests__/`, `e2e/`: unit and end-to-end tests
 - `src/screens/*`: Day view, Dashboard (lazy-loaded), Routine, Settings
 
 ## Keyboard shortcuts
-`C` / `F` / `M` set the day mode • `←` / `→` previous/next day • `T` today • `1`–`4` switch pages • `?` help
+`C` / `F` / `M` set the day mode • `←` / `→` previous/next day • `T` today • `1`–`6` switch pages • `?` help
 
 ## Deploy
 Pushing to `main` redeploys on Vercel. In Chrome on the Mac, click the install icon in the address bar to use it as a desktop app.

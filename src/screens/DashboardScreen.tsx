@@ -56,6 +56,8 @@ import {
 import { ADHERENCE_TARGET, FACETS, GROWTH_FACETS, facetTargets, fmtH, type FacetDef } from '../lib/facets'
 import { DOW_LETTER, addDays, fmtLong, fmtMonth, fromKey, toKey, weekStartOf } from '../lib/time'
 import { Card, CardTitle, MODE_META, PageHeader, Segmented, cx } from '../components/ui'
+import { GoalRow } from '../components/GoalBits'
+import { activeGoals, evaluateGoal } from '../lib/goals'
 
 const MODE_HEX = { ceiling: '#10B981', floor: '#F59E0B', miss: '#F43F5E' }
 
@@ -172,6 +174,8 @@ export function DashboardScreen({ now, onOpenDay }: { now: Date; onOpenDay: (d: 
             ))}
           </div>
         </section>
+
+        <GoalsSummary today={today} />
 
         {/* Insights + weekly trend */}
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
@@ -810,3 +814,22 @@ function BlockReport({ stats }: { stats: BlockStat[] }) {
   )
 }
 
+
+function GoalsSummary({ today }: { today: string }) {
+  const { data } = useStore()
+  const goals = activeGoals(data).map((g) => ({ goal: g, ev: evaluateGoal(data, g, today) }))
+  if (!goals.length) return null
+  const order = { 'off-track': 0, behind: 1, 'on-track': 2, upcoming: 3, missed: 4, done: 5 }
+  goals.sort((a, b) => order[a.ev.status] - order[b.ev.status])
+  const hit = goals.filter((g) => g.ev.status === 'done' || g.ev.status === 'on-track').length
+  return (
+    <Card>
+      <CardTitle title="Goals" sub={`${hit} of ${goals.length} done or on track • Current period`} right={<Target size={18} className="text-brand dark:text-accent" />} />
+      <ul className="grid grid-cols-1 gap-x-8 gap-y-3 md:grid-cols-2 xl:grid-cols-3">
+        {goals.map(({ goal, ev }) => (
+          <GoalRow key={goal.id} goal={goal} ev={ev} />
+        ))}
+      </ul>
+    </Card>
+  )
+}
