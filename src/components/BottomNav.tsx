@@ -1,20 +1,11 @@
-import { CalendarCheck, LayoutDashboard, ListTodo, Settings } from 'lucide-react'
+import { TABS, type Tab } from './Sidebar'
 import { cx } from './ui'
-
-export type Tab = 'today' | 'dashboard' | 'routine' | 'settings'
-
-const TABS: { id: Tab; label: string; Icon: typeof CalendarCheck }[] = [
-  { id: 'today', label: 'Today', Icon: CalendarCheck },
-  { id: 'dashboard', label: 'Dashboard', Icon: LayoutDashboard },
-  { id: 'routine', label: 'Routine', Icon: ListTodo },
-  { id: 'settings', label: 'Settings', Icon: Settings },
-]
 
 export function BottomNav({ tab, onChange }: { tab: Tab; onChange: (t: Tab) => void }) {
   return (
     <nav
       aria-label="Main"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/80 bg-white/95 pb-safe backdrop-blur-md dark:border-night-line dark:bg-night-card/95"
+      className="fixed inset-x-0 bottom-0 z-40 border-t md:hidden border-slate-200/80 bg-white/95 pb-safe backdrop-blur-md dark:border-night-line dark:bg-night-card/95"
     >
       <div className="mx-auto grid max-w-[480px] grid-cols-4">
         {TABS.map(({ id, label, Icon }) => {

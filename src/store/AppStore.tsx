@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import type { AppData, Block, BlockStatus, DayLog, DayMode, Habit, TemplateKey, Targets, Theme } from '../types'
+import type { AppData, Block, BlockStatus, DayLog, DayMode, FacetId, Habit, Reflection, TemplateKey, Targets, Theme } from '../types'
 import { createDefaultData, defaultHabits, defaultTemplates } from '../data/defaults'
 import { storage } from '../services/storageService'
 import { templateFor, toKey, toMin, weekStartOf } from '../lib/time'
@@ -18,6 +18,10 @@ interface Store {
   resetDay: (date: string) => void
   setBlockStatus: (date: string, blockId: string, status: BlockStatus) => void
   toggleBlock: (date: string, blockId: string) => void
+  clearBlockStatus: (date: string, blockId: string) => void
+  setEnergy: (date: string, energy: number | undefined) => void
+  setReflection: (date: string, field: keyof Reflection, text: string) => void
+  setFacetTarget: (id: FacetId, hours: number | undefined) => void
   setMissReason: (date: string, reason: string) => void
   toggleHabit: (date: string, habitId: string) => void
   toggleCare: (date: string, habitId: string) => void
@@ -140,6 +144,37 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
           const cur = day.statuses[blockId]
           day.statuses[blockId] = cur === 'completed' ? 'missed' : 'completed'
           day.updatedAt = Date.now()
+        }),
+
+      clearBlockStatus: (date, blockId) =>
+        mutate((d) => {
+          const day = d.days[date]
+          if (!day) return
+          delete day.statuses[blockId]
+          day.updatedAt = Date.now()
+        }),
+
+      setEnergy: (date, energy) =>
+        mutate((d) => {
+          const day = ensureDay(d, date)
+          day.energy = energy
+          day.updatedAt = Date.now()
+        }),
+
+      setReflection: (date, field, text) =>
+        mutate((d) => {
+          const day = ensureDay(d, date)
+          const r = (day.reflection ??= {})
+          const v = text.trim().slice(0, 80)
+          if (v) r[field] = v
+          else delete r[field]
+          day.updatedAt = Date.now()
+        }),
+
+      setFacetTarget: (id, hours) =>
+        mutate((d) => {
+          if (hours === undefined) delete d.settings.facetTargets[id]
+          else d.settings.facetTargets[id] = Math.max(0, Math.round(hours * 2) / 2)
         }),
 
       setMissReason: (date, reason) =>

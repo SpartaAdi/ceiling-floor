@@ -1,4 +1,4 @@
-import type { AppData, TemplateKey } from '../types'
+import type { AppData, Block, TemplateKey } from '../types'
 import { createDefaultData } from '../data/defaults'
 
 /**
@@ -62,8 +62,8 @@ export function normalize(input: unknown): AppData {
   }
   const settingsIn = isObj(input.settings) ? input.settings : {}
   const targetsIn = isObj(settingsIn.targets) ? settingsIn.targets : {}
-  return {
-    version: 1,
+  const out: AppData = {
+    version: 2,
     templates,
     habits: Array.isArray(input.habits) ? (input.habits as AppData['habits']) : base.habits,
     days: isObj(input.days) ? (input.days as AppData['days']) : {},
@@ -72,7 +72,30 @@ export function normalize(input: unknown): AppData {
       ...base.settings,
       ...(settingsIn as Partial<AppData['settings']>),
       targets: { ...base.settings.targets, ...(targetsIn as Partial<AppData['settings']['targets']>) },
+      facetTargets: isObj(settingsIn.facetTargets) ? (settingsIn.facetTargets as AppData['settings']['facetTargets']) : {},
     },
+  }
+  if (input.version !== 2) migrateToV2(out)
+  return out
+}
+
+/** v1 → v2: Reading gets its own category; habits gain facets; Eat Right added. */
+function migrateToV2(d: AppData) {
+  const fixBlocks = (blocks: Block[]) =>
+    blocks.forEach((b) => {
+      if (b.category === 'mind' && /read/i.test(b.title)) b.category = 'learning'
+    })
+  Object.values(d.templates).forEach(fixBlocks)
+  Object.values(d.days).forEach((day) => fixBlocks(day.blocks))
+  const defaults = createDefaultData().habits
+  for (const h of d.habits) {
+    const def = defaults.find((x) => x.id === h.id)
+    if (def?.facet && !h.facet) h.facet = def.facet
+  }
+  if (!d.habits.some((h) => h.id === 'eatright')) {
+    const eat = defaults.find((h) => h.id === 'eatright')!
+    const lastDaily = d.habits.map((h) => h.kind).lastIndexOf('daily')
+    d.habits.splice(lastDaily + 1, 0, eat)
   }
 }
 

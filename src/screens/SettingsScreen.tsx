@@ -3,7 +3,8 @@ import { Database, Download, FlaskConical, Minus, Monitor, Moon, Plus, Sun, Tras
 import type { AppData, Targets, Theme } from '../types'
 import { useStore } from '../store/AppStore'
 import { exportJSON, importJSON } from '../services/storageService'
-import { Card, CardTitle, Segmented, cx } from '../components/ui'
+import { Card, CardTitle, PageHeader, Segmented, cx } from '../components/ui'
+import { HOUR_FACETS, autoFacetTargets, fmtH } from '../lib/facets'
 
 function Stepper({
   label,
@@ -100,14 +101,10 @@ export function SettingsScreen() {
 
   return (
     <>
-      <header className="sticky top-0 z-30 -mx-4 bg-paper/90 px-4 pb-2 pt-safe backdrop-blur-md dark:bg-night/90">
-        <div className="pb-1 pt-3">
-          <h1 className="text-xl font-bold tracking-tight text-brand dark:text-white">Settings</h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Budget • Backup • Theme</p>
-        </div>
-      </header>
+      <PageHeader title="Settings" sub="Budget • Facet targets • Backup • Theme" />
 
-      <div className="flex flex-col gap-3 pt-1">
+      <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-2">
+        <div className="flex flex-col gap-5">
         <Card>
           <CardTitle title="Weekly Budget" sub={`${t.ceiling + t.floor} planned days • ~${Math.round((t.ceiling / 7) * 100)}% Ceiling`} />
           <div className="divide-y divide-slate-100 dark:divide-night-line">
@@ -117,6 +114,10 @@ export function SettingsScreen() {
           </div>
         </Card>
 
+        <FacetTargetsCard />
+        </div>
+
+        <div className="flex flex-col gap-5">
         <Card>
           <CardTitle title="Theme" sub="Light • Dark • System" />
           <Segmented<Theme>
@@ -206,11 +207,11 @@ export function SettingsScreen() {
             ) : (
               <ActionButton
                 icon={<FlaskConical size={18} />}
-                label="Load 14-Day Demo Data"
-                sub="Fills the past 14 days • Overwrites them"
+                label="Load 6-Week Demo Data"
+                sub="Fills the past 42 days • Overwrites them"
                 onClick={() => {
                   loadDemo()
-                  notify('14 demo days loaded')
+                  notify('6 weeks of demo data loaded')
                 }}
               />
             )}
@@ -229,10 +230,62 @@ export function SettingsScreen() {
           </div>
         </Card>
 
+        </div>
         <p className="pb-2 text-center text-[11px] text-slate-400">
           Ceiling • Floor • Miss • v1.0 • Local-first
         </p>
       </div>
     </>
+  )
+}
+
+function FacetTargetsCard() {
+  const { data, setFacetTarget } = useStore()
+  const auto = autoFacetTargets(data)
+  return (
+    <Card>
+      <CardTitle title="Facet Targets" sub="Weekly hours • Auto = your Green-week plan" />
+      <div className="divide-y divide-slate-100 dark:divide-night-line">
+        {HOUR_FACETS.map((f) => {
+          const custom = data.settings.facetTargets[f.id]
+          const value = custom ?? auto[f.id]
+          return (
+            <div key={f.id} className="flex min-h-14 items-center gap-3">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg" style={{ background: `${f.color}1A`, color: f.color }}>
+                <f.Icon size={16} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-brand dark:text-white">{f.label}</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  {custom === undefined ? 'Auto from templates' : (
+                    <button onClick={() => setFacetTarget(f.id, undefined)} className="font-semibold text-brand underline dark:text-accent">
+                      Reset to auto • {fmtH(auto[f.id])}
+                    </button>
+                  )}
+                </p>
+              </div>
+              <div className="flex items-center gap-1 rounded-full bg-slate-100 p-1 dark:bg-night">
+                <button
+                  aria-label={`Decrease ${f.label} target`}
+                  disabled={value <= 0}
+                  onClick={() => setFacetTarget(f.id, value - 1)}
+                  className="flex size-9 items-center justify-center rounded-full bg-white text-brand shadow-sm disabled:opacity-30 dark:bg-night-card dark:text-white"
+                >
+                  <Minus size={15} />
+                </button>
+                <span className="w-14 text-center text-sm font-bold tabular-nums text-brand dark:text-white">{fmtH(value)}</span>
+                <button
+                  aria-label={`Increase ${f.label} target`}
+                  onClick={() => setFacetTarget(f.id, value + 1)}
+                  className="flex size-9 items-center justify-center rounded-full bg-white text-brand shadow-sm dark:bg-night-card dark:text-white"
+                >
+                  <Plus size={15} />
+                </button>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </Card>
   )
 }

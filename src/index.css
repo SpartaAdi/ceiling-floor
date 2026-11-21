@@ -19,6 +19,8 @@
 }
 
 @layer base {
+  :root { --chart-surface: #FFFFFF; --chart-grid: #E2E8F0; --chart-ink: #64748B; }
+  html.dark { --chart-surface: #0E2440; --chart-grid: #1A3A5C; --chart-ink: #94A3B8; }
   html {
     -webkit-tap-highlight-color: transparent;
     -webkit-text-size-adjust: 100%;
@@ -66,9 +68,15 @@
   40% { transform: scale(0.9); }
   100% { transform: scale(1); }
 }
-.animate-sheet { animation: sheet-up 0.24s cubic-bezier(0.2, 0.9, 0.3, 1); }
-.animate-fade { animation: fade-in 0.2s ease-out; }
-.animate-pop { animation: pop 0.22s ease-out; }
+@utility animate-sheet {
+  animation: sheet-up 0.24s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+@utility animate-fade {
+  animation: fade-in 0.2s ease-out;
+}
+@utility animate-pop {
+  animation: pop 0.22s ease-out;
+}
 
 @media (prefers-reduced-motion: reduce) {
   .animate-sheet, .animate-fade, .animate-pop { animation: none; }

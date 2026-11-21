@@ -1,11 +1,14 @@
-import { Suspense, lazy, useEffect, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
 import { useStore } from './store/AppStore'
 import { useNow } from './hooks/useNow'
-import { BottomNav, type Tab } from './components/BottomNav'
+import { Sidebar, type Tab } from './components/Sidebar'
+import { BottomNav } from './components/BottomNav'
+import { ShortcutsDialog } from './components/DayPanels'
 import { Toast } from './components/ui'
-import { TodayScreen } from './screens/TodayScreen'
+import { DayScreen } from './screens/DayScreen'
 import { RoutineScreen } from './screens/RoutineScreen'
 import { SettingsScreen } from './screens/SettingsScreen'
+import { toKey } from './lib/time'
 
 const DashboardScreen = lazy(() => import('./screens/DashboardScreen').then((m) => ({ default: m.DashboardScreen })))
 
@@ -35,13 +38,19 @@ function useTheme() {
   }, [theme])
 }
 
+const TAB_KEYS: Record<string, Tab> = { '1': 'today', '2': 'dashboard', '3': 'routine', '4': 'settings' }
+
 export default function App() {
   const { ready, toast } = useStore()
   const now = useNow()
+  const today = toKey(now)
   const [tab, setTab] = useState<Tab>(readTab)
+  // null = follow "today" (rolls over at midnight)
+  const [viewDate, setViewDate] = useState<string | null>(null)
+  const [shortcuts, setShortcuts] = useState(false)
   useTheme()
 
-  const go = (t: Tab) => {
+  const go = useCallback((t: Tab) => {
     setTab(t)
     try {
       sessionStorage.setItem(TAB_KEY, t)
@@ -49,24 +58,54 @@ export default function App() {
       /* ignore */
     }
     window.scrollTo({ top: 0 })
-  }
+  }, [])
+
+  const setDate = useCallback((d: string) => setViewDate(d >= today ? null : d), [today])
+  const openDay = useCallback(
+    (d: string) => {
+      setDate(d)
+      go('today')
+    },
+    [go, setDate],
+  )
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return
+      if (e.metaKey || e.ctrlKey || e.altKey) return
+      if (e.key === '?') {
+        setShortcuts((v) => !v)
+        e.preventDefault()
+      } else if (TAB_KEYS[e.key]) {
+        go(TAB_KEYS[e.key])
+        e.preventDefault()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [go])
 
   if (!ready) return null
 
   return (
-    <div className="mx-auto min-h-dvh max-w-[480px] px-4 pb-28">
-      <main key={tab}>
-        {tab === 'today' && <TodayScreen now={now} />}
-        {tab === 'dashboard' && (
-          <Suspense fallback={<div className="pt-24 text-center text-sm text-slate-400">Loading…</div>}>
-            <DashboardScreen now={now} />
-          </Suspense>
-        )}
-        {tab === 'routine' && <RoutineScreen />}
-        {tab === 'settings' && <SettingsScreen />}
+    <div className="flex min-h-dvh">
+      <Sidebar tab={tab} onChange={go} onShortcuts={() => setShortcuts(true)} />
+      <main className="min-w-0 flex-1 px-4 pb-28 pt-6 md:px-8 md:pb-12 md:pt-8">
+        <div key={tab} className="mx-auto max-w-[1400px]">
+          {tab === 'today' && <DayScreen now={now} date={viewDate ?? today} setDate={setDate} />}
+          {tab === 'dashboard' && (
+            <Suspense fallback={<div className="pt-24 text-center text-sm text-slate-400">Loading…</div>}>
+              <DashboardScreen now={now} onOpenDay={openDay} />
+            </Suspense>
+          )}
+          {tab === 'routine' && <RoutineScreen />}
+          {tab === 'settings' && <SettingsScreen />}
+        </div>
       </main>
       <Toast message={toast} />
       <BottomNav tab={tab} onChange={go} />
+      <ShortcutsDialog open={shortcuts} onClose={() => setShortcuts(false)} />
     </div>
   )
 }

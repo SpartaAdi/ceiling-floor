@@ -1,10 +1,11 @@
 import { useState, type ReactNode } from 'react'
 import { Moon, Pencil, Plus, RotateCcw, Trash2, Clock } from 'lucide-react'
-import type { Block, Category, Habit, HabitKind, TemplateKey } from '../types'
+import type { Block, Category, FacetId, Habit, HabitKind, TemplateKey } from '../types'
+import { FACETS, FACET_BY_ID } from '../lib/facets'
 import { useStore } from '../store/AppStore'
 import { CATEGORIES, CATEGORY_META, TEMPLATE_LABELS } from '../data/defaults'
 import { durationLabel, toMin } from '../lib/time'
-import { BottomSheet, Card, cx } from '../components/ui'
+import { BottomSheet, Card, PageHeader, cx } from '../components/ui'
 
 type RTab = TemplateKey | 'habits'
 const TABS: { id: RTab; label: string }[] = [
@@ -35,12 +36,9 @@ export function RoutineScreen() {
   const [tab, setTab] = useState<RTab>('weekday-ceiling')
   return (
     <>
-      <header className="sticky top-0 z-30 -mx-4 bg-paper/90 px-4 pb-3 pt-safe backdrop-blur-md dark:bg-night/90">
-        <div className="pb-2 pt-3">
-          <h1 className="text-xl font-bold tracking-tight text-brand dark:text-white">Routine</h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Edit templates • Past days keep snapshots</p>
-        </div>
-        <div className="no-scrollbar -mx-4 flex gap-1.5 overflow-x-auto px-4" role="tablist">
+      <PageHeader title="Routine" sub="Edit templates & habits • Past days keep their snapshots" />
+      <div className="mx-auto max-w-4xl">
+        <div className="no-scrollbar mb-4 flex gap-1.5 overflow-x-auto" role="tablist">
           {TABS.map((t) => (
             <button
               key={t.id}
@@ -58,8 +56,8 @@ export function RoutineScreen() {
             </button>
           ))}
         </div>
-      </header>
-      <div className="pt-1">{tab === 'habits' ? <HabitsEditor /> : <TemplateEditor tk={tab} />}</div>
+        {tab === 'habits' ? <HabitsEditor /> : <TemplateEditor tk={tab} />}
+      </div>
     </>
   )
 }
@@ -277,6 +275,11 @@ function HabitsEditor() {
                         <Moon size={10} /> Night
                       </span>
                     )}
+                    {h.facet && (
+                      <span className="rounded-full px-1.5 py-0.5 text-[10px] font-semibold" style={{ background: `${FACET_BY_ID[h.facet].color}1A`, color: FACET_BY_ID[h.facet].color }}>
+                        {FACET_BY_ID[h.facet].label}
+                      </span>
+                    )}
                     {h.nudgeAfter && (
                       <span className="inline-flex items-center gap-0.5 rounded-full bg-floor/10 px-1.5 py-0.5 text-[10px] text-floor">
                         <Clock size={10} /> {h.nudgeAfter}
@@ -333,7 +336,9 @@ function HabitForm({ initial, onDone }: { initial: Habit; onDone: () => void }) 
         if (out.kind === 'weekly') {
           delete out.evening
           delete out.nudgeAfter
+          delete out.facet
         }
+        if (!out.facet) delete out.facet
         if (!out.nudgeAfter) delete out.nudgeAfter
         upsertHabit(out)
         notify('Habit saved')
@@ -377,6 +382,20 @@ function HabitForm({ initial, onDone }: { initial: Habit; onDone: () => void }) 
           </label>
           <Field label="Nudge after • optional">
             <input type="time" value={h.nudgeAfter ?? ''} onChange={(e) => setH({ ...h, nudgeAfter: e.target.value || undefined })} className={inputCls} />
+          </Field>
+          <Field label="Counts toward • Dashboard facet">
+            <select
+              value={h.facet ?? ''}
+              onChange={(e) => setH({ ...h, facet: (e.target.value || undefined) as FacetId | undefined })}
+              className={inputCls}
+            >
+              <option value="">None</option>
+              {FACETS.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.label}
+                </option>
+              ))}
+            </select>
           </Field>
         </>
       )}

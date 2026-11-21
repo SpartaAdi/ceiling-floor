@@ -25,7 +25,7 @@ const WEEKDAY_CEILING: Row[] = [
   ['18:00', '19:30', 'Bunny Time', 'Park • Play • Dinner prep', 'family'],
   ['19:30', '21:00', 'Evening Sitting', 'Triphala • GoML • News • Speech • Journal', 'deep'],
   ['21:00', '21:30', 'Night Care', 'Meds • 5m steam • Brush', 'care'],
-  ['21:30', '22:00', 'Reading', 'Kindle or physical book', 'mind'],
+  ['21:30', '22:00', 'Reading', 'Kindle or physical book', 'learning'],
   ['22:00', '23:59', 'Sleep', 'Lights out', 'rest'],
 ]
 
@@ -37,7 +37,7 @@ const WEEKDAY_FLOOR: Row[] = [
   ['17:00', '20:00', 'Dinner & Chill', 'Early dinner • Family • Bunny time', 'family'],
   ['20:00', '21:00', 'Evening Sitting', '1 hr: Journal • Speech • GoML', 'deep'],
   ['21:00', '21:30', 'Night Care', 'Meds • Triphala • 5m steam • Brush', 'care'],
-  ['21:30', '22:00', 'Reading', 'Kindle or physical book', 'mind'],
+  ['21:30', '22:00', 'Reading', 'Kindle or physical book', 'learning'],
   ['22:00', '23:59', 'Sleep', 'Lights out', 'rest'],
 ]
 
@@ -53,7 +53,7 @@ const WEEKEND_CEILING: Row[] = [
   ['18:00', '20:00', 'Play & Brain', 'Bunny • Chess • Math • Triphala 7:30', 'family'],
   ['20:00', '21:00', 'Evening Sitting', '1 hr: Journal • Speech • GoML', 'deep'],
   ['21:00', '21:30', 'Night Care', 'Meds • 5m steam • Brush', 'care'],
-  ['21:30', '22:00', 'Reading', 'Kindle or physical book', 'mind'],
+  ['21:30', '22:00', 'Reading', 'Kindle or physical book', 'learning'],
   ['22:00', '23:59', 'Sleep', 'Lights out', 'rest'],
 ]
 
@@ -66,7 +66,7 @@ const WEEKEND_FLOOR: Row[] = [
   ['17:00', '18:00', 'Early Dinner', 'Dinner • Optional walk', 'meal'],
   ['18:00', '21:00', 'Family & Fun', 'Bunny • Chess • Movie • Triphala 7:30', 'family'],
   ['21:00', '21:30', 'Night Care', 'Meds • 5m steam • Brush', 'care'],
-  ['21:30', '22:00', 'Reading', 'Kindle or physical book', 'mind'],
+  ['21:30', '22:00', 'Reading', 'Kindle or physical book', 'learning'],
   ['22:00', '23:59', 'Sleep', 'Lights out', 'rest'],
 ]
 
@@ -78,10 +78,11 @@ export const defaultTemplates = (): Record<TemplateKey, Block[]> => ({
 })
 
 export const defaultHabits = (): Habit[] => [
-  { id: 'meds', label: 'Meds', kind: 'daily', evening: true },
-  { id: 'triphala', label: 'Triphala', kind: 'daily', nudgeAfter: '19:30' },
-  { id: 'steam', label: 'Steam', kind: 'daily', evening: true },
-  { id: 'brush', label: 'Brush', kind: 'daily', evening: true },
+  { id: 'meds', label: 'Meds', kind: 'daily', evening: true, facet: 'health' },
+  { id: 'triphala', label: 'Triphala', kind: 'daily', nudgeAfter: '19:30', facet: 'health' },
+  { id: 'steam', label: 'Steam', kind: 'daily', evening: true, facet: 'health' },
+  { id: 'brush', label: 'Brush', kind: 'daily', evening: true, facet: 'health' },
+  { id: 'eatright', label: 'Eat Right', kind: 'daily', facet: 'nutrition' },
   { id: 'besan', label: 'Besan Scrub', kind: 'weekly' },
   { id: 'oiling', label: 'Oiling', kind: 'weekly' },
 ]
@@ -89,10 +90,11 @@ export const defaultHabits = (): Habit[] => [
 export const defaultSettings = (): Settings => ({
   targets: { ceiling: 5, floor: 2, miss: 0 },
   theme: 'system',
+  facetTargets: {},
 })
 
 export const createDefaultData = (): AppData => ({
-  version: 1,
+  version: 2,
   templates: defaultTemplates(),
   habits: defaultHabits(),
   days: {},
@@ -108,15 +110,16 @@ export const TEMPLATE_LABELS: Record<TemplateKey, string> = {
 }
 
 export const CATEGORY_META: Record<Category, { label: string; dot: string }> = {
-  mind: { label: 'Mind', dot: 'bg-sky-400' },
-  fitness: { label: 'Fitness', dot: 'bg-emerald-400' },
-  health: { label: 'Health', dot: 'bg-teal-400' },
-  work: { label: 'Work', dot: 'bg-slate-400' },
-  deep: { label: 'Deep Work', dot: 'bg-blue-500' },
-  meal: { label: 'Meal', dot: 'bg-orange-400' },
-  family: { label: 'Family', dot: 'bg-pink-400' },
-  care: { label: 'Care', dot: 'bg-cyan-400' },
-  rest: { label: 'Rest', dot: 'bg-slate-300' },
+  deep: { label: 'Deep Work', dot: 'bg-blue-700' },
+  fitness: { label: 'Fitness', dot: 'bg-teal-600' },
+  mind: { label: 'Mindfulness', dot: 'bg-orange-700' },
+  learning: { label: 'Reading', dot: 'bg-lime-600' },
+  health: { label: 'Health', dot: 'bg-cyan-500' },
+  care: { label: 'Self-care', dot: 'bg-cyan-300' },
+  family: { label: 'Family', dot: 'bg-pink-500' },
+  meal: { label: 'Meals', dot: 'bg-yellow-700' },
+  work: { label: 'Office', dot: 'bg-slate-400' },
+  rest: { label: 'Sleep', dot: 'bg-slate-600' },
 }
 
 export const CATEGORIES = Object.keys(CATEGORY_META) as Category[]

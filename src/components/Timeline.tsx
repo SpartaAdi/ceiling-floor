@@ -8,61 +8,68 @@ import { useStore } from '../store/AppStore'
 import { HabitPill } from './HabitStrips'
 import { cx } from './ui'
 
-function StatusIcon({ status }: { status?: BlockStatus }) {
+function TickButton({ kind, active, onClick, label }: { kind: 'done' | 'miss'; active: boolean; onClick: () => void; label: string }) {
+  const done = kind === 'done'
   return (
-    <span
+    <button
+      onClick={onClick}
+      aria-pressed={active}
+      aria-label={label}
+      title={done ? 'Done' : 'Missed'}
       className={cx(
-        'flex size-9 shrink-0 items-center justify-center rounded-full border-2 transition-all',
-        status === 'completed' && 'animate-pop border-ceiling bg-ceiling text-white',
-        status === 'missed' && 'animate-pop border-miss bg-miss text-white',
-        !status && 'border-slate-300 text-transparent dark:border-night-line',
+        'flex size-10 shrink-0 items-center justify-center rounded-xl border-2 transition-all active:scale-90',
+        done
+          ? active
+            ? 'animate-pop border-ceiling bg-ceiling text-white shadow-md shadow-ceiling/30'
+            : 'border-ceiling/30 text-ceiling/60 hover:border-ceiling hover:bg-ceiling/10 hover:text-ceiling'
+          : active
+            ? 'animate-pop border-miss bg-miss text-white shadow-md shadow-miss/30'
+            : 'border-miss/30 text-miss/60 hover:border-miss hover:bg-miss/10 hover:text-miss',
       )}
-      aria-hidden
     >
-      {status === 'missed' ? <X size={18} strokeWidth={3} /> : <Check size={18} strokeWidth={3} />}
-    </span>
+      {done ? <Check size={18} strokeWidth={3} /> : <X size={18} strokeWidth={3} />}
+    </button>
   )
 }
 
-function BlockCard({
+function BlockRow({
   block,
   status,
   isNow,
+  progress,
   isPast,
-  onToggle,
+  onSet,
   extra,
 }: {
   block: Block
   status?: BlockStatus
   isNow: boolean
+  progress: number
   isPast: boolean
-  onToggle: () => void
+  onSet: (s: BlockStatus) => void
   extra?: ReactNode
 }) {
   const cat = CATEGORY_META[block.category] ?? CATEGORY_META.work
   return (
-    <li data-now={isNow || undefined} className="scroll-mt-64 scroll-mb-28">
+    <li data-now={isNow || undefined} className="scroll-mt-24">
       <div
-        role="button"
-        tabIndex={0}
-        aria-label={`${block.title}, ${block.start} to ${block.end}, ${status ?? 'not logged'}. Tap to toggle.`}
-        onClick={onToggle}
-        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), onToggle())}
         className={cx(
-          'group flex min-h-16 cursor-pointer items-center gap-3 rounded-2xl border bg-white px-3 py-2.5 transition-all active:scale-[0.99] dark:bg-night-card',
+          'relative flex min-h-[68px] items-center gap-3 overflow-hidden rounded-2xl border bg-white px-4 py-2.5 transition-colors dark:bg-night-card',
           isNow
-            ? 'border-brand shadow-[0_0_0_3px_rgba(10,37,64,0.12)] dark:border-accent dark:shadow-[0_0_0_3px_rgba(249,198,66,0.18)]'
-            : 'border-slate-200/80 dark:border-night-line',
+            ? 'border-brand ring-4 ring-brand/10 dark:border-accent dark:ring-accent/15'
+            : status === 'missed'
+              ? 'border-miss/25'
+              : 'border-slate-200/80 dark:border-night-line',
           isPast && !status && !isNow && 'opacity-70',
         )}
       >
-        <div className="flex w-12 shrink-0 flex-col items-start">
-          <span className="font-mono text-[13px] font-semibold tabular-nums text-brand dark:text-white">{block.start}</span>
-          <span className="font-mono text-[11px] tabular-nums text-slate-400">{block.end}</span>
+        <div className="w-14 shrink-0 font-mono tabular-nums">
+          <div className="text-sm font-semibold text-brand dark:text-white">{block.start}</div>
+          <div className="text-xs text-slate-400">{block.end}</div>
         </div>
-        <span className={cx('h-9 w-1 shrink-0 rounded-full', cat.dot)} aria-hidden />
+        <span className={cx('h-10 w-1 shrink-0 rounded-full', cat.dot)} aria-hidden />
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <h3
               className={cx(
                 'truncate text-[15px] font-semibold',
@@ -72,17 +79,28 @@ function BlockCard({
               {block.title}
             </h3>
             {isNow && (
-              <span className="shrink-0 rounded-full bg-brand px-1.5 py-0.5 text-[10px] font-bold tracking-wider text-accent dark:bg-accent dark:text-brand">
+              <span className="shrink-0 rounded-full bg-brand px-2 py-0.5 text-[10px] font-bold tracking-wider text-accent dark:bg-accent dark:text-brand">
                 NOW
               </span>
             )}
           </div>
-          <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-            {block.details}
-            <span className="text-slate-300 dark:text-slate-500"> • {durationLabel(block.start, block.end)}</span>
-          </p>
+          <p className="truncate text-xs text-slate-500 dark:text-slate-400">{block.details}</p>
         </div>
-        <StatusIcon status={status} />
+        <div className="hidden shrink-0 flex-col items-end gap-0.5 sm:flex">
+          <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 dark:bg-night dark:text-slate-400">
+            {cat.label}
+          </span>
+          <span className="text-[11px] tabular-nums text-slate-400">{durationLabel(block.start, block.end)}</span>
+        </div>
+        <div className="flex shrink-0 gap-1.5">
+          <TickButton kind="done" active={status === 'completed'} onClick={() => onSet('completed')} label={`${block.title} done`} />
+          <TickButton kind="miss" active={status === 'missed'} onClick={() => onSet('missed')} label={`${block.title} missed`} />
+        </div>
+        {isNow && (
+          <span className="absolute inset-x-0 bottom-0 h-1 bg-brand/10 dark:bg-accent/10" aria-hidden>
+            <span className="block h-full bg-brand dark:bg-accent" style={{ width: `${progress}%` }} />
+          </span>
+        )}
       </div>
       {extra}
     </li>
@@ -90,28 +108,15 @@ function BlockCard({
 }
 
 /**
- * Block list for a day. When `live` is set (today), the block matching
- * the current time gets a NOW badge and is scrolled into view on mount.
+ * Block list for a day. When `live` (today), the block matching the current
+ * time gets a NOW badge + progress bar and is scrolled into view on open.
  */
-export function Timeline({
-  date,
-  day,
-  blocks,
-  now,
-  live,
-}: {
-  date: string
-  day?: DayLog
-  blocks: Block[]
-  now?: Date
-  live?: boolean
-}) {
-  const { data, toggleBlock, toggleHabit } = useStore()
+export function Timeline({ date, day, blocks, now, live }: { date: string; day?: DayLog; blocks: Block[]; now?: Date; live?: boolean }) {
+  const { data, setBlockStatus, clearBlockStatus, toggleHabit } = useStore()
   const listRef = useRef<HTMLOListElement>(null)
   const m = now ? nowMin(now) : -1
-  const nowId = live ? blocks.find((b) => m >= toMin(b.start) && m < toMin(b.end, true))?.id : undefined
+  const current = live ? blocks.find((b) => m >= toMin(b.start) && m < toMin(b.end, true)) : undefined
 
-  // Auto-focus the active block once on open
   useEffect(() => {
     if (!live) return
     const t = window.setTimeout(() => {
@@ -126,22 +131,29 @@ export function Timeline({
     <ol ref={listRef} className="flex flex-col gap-2">
       {blocks.map((b) => {
         const status = day ? effectiveStatus(day, b.id) : undefined
-        const isNow = b.id === nowId
-        const isPast = live ? toMin(b.end, true) <= m : false
-        const showCare = live && b.category === 'care' && m >= toMin(b.start) && eveningOpen.length > 0
+        const isNow = b.id === current?.id
+        const start = toMin(b.start)
+        const end = toMin(b.end, true)
+        const showCare = live && b.category === 'care' && m >= start && eveningOpen.length > 0
         return (
-          <BlockCard
+          <BlockRow
             key={b.id}
             block={b}
             status={status}
             isNow={isNow}
-            isPast={isPast}
-            onToggle={() => toggleBlock(date, b.id)}
+            progress={isNow ? Math.round(((m - start) / (end - start)) * 100) : 0}
+            isPast={live ? end <= m : false}
+            onSet={(s) => {
+              // Re-clicking the active state clears it only on days without a mode
+              if (status === s && !day?.mode && day?.statuses[b.id]) clearBlockStatus(date, b.id)
+              else if (status !== s) setBlockStatus(date, b.id, s)
+            }}
             extra={
               showCare && (
-                <div className="mx-3 -mt-1 flex gap-1.5 rounded-b-2xl border border-t-0 border-slate-200/80 bg-slate-50 p-2 dark:border-night-line dark:bg-night">
+                <div className="mx-4 flex flex-wrap items-center gap-2 rounded-b-2xl border border-t-0 border-slate-200/80 bg-slate-50 px-3 py-2 dark:border-night-line dark:bg-night">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-floor">Still open</span>
                   {eveningOpen.map((h) => (
-                    <HabitPill key={h.id} label={h.label} done={false} nudge onToggle={() => toggleHabit(date, h.id)} />
+                    <HabitPill key={h.id} label={h.label} done={false} nudge compact onToggle={() => toggleHabit(date, h.id)} />
                   ))}
                 </div>
               )

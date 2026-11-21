@@ -1,6 +1,6 @@
 # Ceiling • Floor • Miss
 
-Mobile-first, local-first PWA for the Ceiling / Floor / Miss daily routine system.
+Desktop-first, local-first web app (installable PWA) for the Ceiling / Floor / Miss daily routine system, with life-facet analytics.
 
 ```bash
 npm install
@@ -16,10 +16,15 @@ npm run icons     # regenerate PWA icons in public/
 - `src/services/storageService.ts`: async `StorageAdapter` (localStorage now; swap `storage` for Supabase later), JSON export/import
 - `src/store/AppStore.tsx`: all state actions (mode auto-tick, block toggles, habits, CRUD)
 - `src/lib/stats.ts`: weekly budget, health badge, forecast, streaks, block report, habit matrix
-- `src/screens/*`: Today, Dashboard (lazy-loaded), Routine, Settings
+- `src/lib/facets.ts`: life facets (Deep Work, Fitness, Mindfulness, Reading, Family, Health & Care, Nutrition, Sleep) and weekly targets
+- `src/lib/insights.ts`: facet hours/scores, period-over-period change, weekly trends, rule-based insights
+- `src/screens/*`: Day view, Dashboard (lazy-loaded), Routine, Settings
 
-## Install on phone
-Deploy `dist/` to any HTTPS static host, open it in Safari/Chrome, then **Add to Home Screen**.
+## Keyboard shortcuts
+`C` / `F` / `M` set the day mode • `←` / `→` previous/next day • `T` today • `1`–`4` switch pages • `?` help
+
+## Deploy
+Pushing to `main` redeploys on Vercel. In Chrome on the Mac, click the install icon in the address bar to use it as a desktop app.
 
 ## Data note
 Logs (including habit/health ticks) live unencrypted in this browser's localStorage, and JSON exports are plain text, so keep backup files somewhere private.

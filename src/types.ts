@@ -4,15 +4,19 @@ export type TemplateKey = 'weekday-ceiling' | 'weekday-floor' | 'weekend-ceiling
 export type BlockStatus = 'completed' | 'missed'
 
 export type Category =
-  | 'mind'
-  | 'fitness'
-  | 'health'
-  | 'work'
   | 'deep'
-  | 'meal'
-  | 'family'
+  | 'fitness'
+  | 'mind'
+  | 'learning'
+  | 'health'
   | 'care'
+  | 'family'
+  | 'meal'
+  | 'work'
   | 'rest'
+
+/** Major life areas the dashboard reports on. */
+export type FacetId = 'deep' | 'fitness' | 'mind' | 'learning' | 'family' | 'health' | 'nutrition' | 'sleep'
 
 export interface Block {
   id: string
@@ -33,6 +37,14 @@ export interface Habit {
   evening?: boolean
   /** HH:MM after which an unticked habit is subtly highlighted */
   nudgeAfter?: string
+  /** Life facet this habit feeds into */
+  facet?: FacetId
+}
+
+export interface Reflection {
+  win?: string
+  lesson?: string
+  focus?: string // tomorrow's one focus
 }
 
 export interface DayLog {
@@ -45,6 +57,9 @@ export interface DayLog {
   blocks: Block[]
   statuses: Record<string, BlockStatus>
   habits: Record<string, boolean>
+  /** 1 (drained) – 5 (great) */
+  energy?: number
+  reflection?: Reflection
   updatedAt: number
   /** Created by the demo-data loader */
   demo?: boolean
@@ -67,11 +82,13 @@ export type Theme = 'light' | 'dark' | 'system'
 export interface Settings {
   targets: Targets
   theme: Theme
+  /** Weekly hour targets per hours-facet; missing = auto from templates */
+  facetTargets: Partial<Record<FacetId, number>>
   demoLoaded?: boolean
 }
 
 export interface AppData {
-  version: 1
+  version: 2
   templates: Record<TemplateKey, Block[]>
   habits: Habit[]
   days: Record<string, DayLog>
