@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addDays, dayTypeOf, dowIndex, durationLabel, fromKey, isWeekend, templateFor, toKey, toMin, weekDays, weekStartOf } from '../time'
+import { addDays, dayTypeOf, dowIndex, durationLabel, fmt12, fmtTime, fromKey, isWeekend, templateFor, to12, toKey, toMin, weekDays, weekStartOf } from '../time'
 import { MON, SAT, SUN, WED } from './helpers'
 
 describe('date keys', () => {
@@ -47,5 +47,28 @@ describe('time maths', () => {
     expect(durationLabel('05:00', '05:15')).toBe('15m')
     expect(durationLabel('22:00', '23:59')).toBe('2h')
     expect(durationLabel('13:30', '15:45')).toBe('2h 15m')
+  })
+})
+
+describe('12-hour display', () => {
+  it.each([
+    ['00:00', '12:00 AM'],
+    ['00:30', '12:30 AM'],
+    ['05:00', '5:00 AM'],
+    ['11:59', '11:59 AM'],
+    ['12:00', '12:00 PM'],
+    ['12:45', '12:45 PM'],
+    ['13:30', '1:30 PM'],
+    ['21:05', '9:05 PM'],
+    ['23:59', '11:59 PM'],
+  ])('%s → %s', (input, want) => expect(fmt12(input)).toBe(want))
+  it('shows an end-of-day 23:59 block end as midnight', () => {
+    expect(fmt12('23:59', true)).toBe('12:00 AM')
+    expect(to12('23:59', true)).toEqual({ time: '12:00', period: 'AM' })
+    expect(fmt12('22:00', true)).toBe('10:00 PM')
+  })
+  it('formats the live clock', () => {
+    expect(fmtTime(new Date(2026, 10, 18, 21, 5))).toBe('9:05 PM')
+    expect(fmtTime(new Date(2026, 10, 18, 0, 7))).toBe('12:07 AM')
   })
 })

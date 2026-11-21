@@ -29,16 +29,19 @@ export const classifyWeek = (ceiling: number, miss: number, t: Targets): WeekHea
 
 export interface WeekSummary {
   weekStart: string
-  days: { key: string; mode?: DayMode; future: boolean; isToday: boolean }[]
+  days: { key: string; mode?: DayMode; plan?: DayMode; future: boolean; isToday: boolean }[]
   ceiling: number
   floor: number
   miss: number
   logged: number
+  /** Open days (today or later, not yet logged) */
   remaining: number
+  /** Open days that already have a plan */
+  planned: { ceiling: number; floor: number; miss: number }
   floorLeft: number
   /** Actual classification of what is logged so far */
   actual: WeekHealth
-  /** Best achievable outcome if every remaining day is Ceiling */
+  /** Best achievable outcome: plans as planned, every unplanned open day Ceiling */
   projected: WeekHealth
   forecast: string
 }
@@ -48,6 +51,7 @@ export function summarizeWeek(data: AppData, weekStart: string, todayKey: string
   const days = weekDays(weekStart).map((key) => ({
     key,
     mode: data.days[key]?.mode,
+    plan: data.days[key]?.mode ? undefined : data.days[key]?.plan,
     future: key > todayKey,
     isToday: key === todayKey,
   }))
@@ -56,10 +60,17 @@ export function summarizeWeek(data: AppData, weekStart: string, todayKey: string
   const floor = count('floor')
   const miss = count('miss')
   const logged = ceiling + floor + miss
-  const remaining = days.filter((d) => !d.mode && d.key >= todayKey).length
+  const open = days.filter((d) => !d.mode && d.key >= todayKey)
+  const remaining = open.length
+  const planned = {
+    ceiling: open.filter((d) => d.plan === 'ceiling').length,
+    floor: open.filter((d) => d.plan === 'floor').length,
+    miss: open.filter((d) => d.plan === 'miss').length,
+  }
+  const unplanned = open.filter((d) => !d.plan).length
   const floorLeft = t.floor - floor
   const actual = classifyWeek(ceiling, miss, t)
-  const projected = classifyWeek(ceiling + remaining, miss, t)
+  const projected = classifyWeek(ceiling + planned.ceiling + unplanned, miss + planned.miss, t)
   return {
     weekStart,
     days,
@@ -68,10 +79,19 @@ export function summarizeWeek(data: AppData, weekStart: string, todayKey: string
     miss,
     logged,
     remaining,
+    planned,
     floorLeft,
     actual,
     projected,
-    forecast: forecastLine({ ceiling, miss, remaining, floorLeft, t, projected }),
+    forecast: forecastLine({
+      ceiling: ceiling + planned.ceiling,
+      miss: miss + planned.miss,
+      remaining: unplanned,
+      closed: remaining === 0,
+      floorLeft: floorLeft - planned.floor,
+      t,
+      projected,
+    }),
   }
 }
 
@@ -81,6 +101,7 @@ function forecastLine(p: {
   ceiling: number
   miss: number
   remaining: number
+  closed: boolean
   floorLeft: number
   t: Targets
   projected: WeekHealth
@@ -89,9 +110,10 @@ function forecastLine(p: {
   const needGreen = Math.max(0, t.ceiling - ceiling)
   const needAmber = Math.max(0, t.ceiling - 2 - ceiling)
 
-  if (remaining === 0) {
+  if (p.closed) {
     return p.projected === 'green' ? 'Week closed • Green 🎉' : `Week closed • ${HEALTH_META[p.projected].label}`
   }
+  if (remaining === 0) return `Plan → ${HEALTH_META[p.projected].label} • Stick to it`
   if (miss >= t.miss + 2) return 'Red locked • Finish strong'
   if (miss > t.miss) {
     if (needAmber === 0) return 'Amber secured • No more Miss'

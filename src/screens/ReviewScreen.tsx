@@ -188,6 +188,8 @@ export function ReviewScreen({ now, ws, setWs }: { now: Date; ws: string; setWs:
               <div className="flex flex-col gap-4">
                 <TextList title="Wins" tone="text-ceiling" items={r.wins} empty="No wins logged" />
                 <TextList title="Lessons" tone="text-brand dark:text-accent" items={r.lessons} empty="No lessons logged" />
+                {r.grateful.length > 0 && <TextList title="Grateful for" tone="text-ceiling" items={r.grateful} empty="" />}
+                {r.bothers.length > 0 && <TextList title="What bothered me" tone="text-floor" items={r.bothers} empty="" />}
                 {r.bottleneck && (
                   <div>
                     <Label className="!text-miss">Bottleneck</Label>
@@ -278,7 +280,9 @@ function TextList({ title, tone, items, empty }: { title: string; tone: string; 
           {items.map((i) => (
             <li key={i.date} className="flex gap-2 text-sm">
               <span className="w-9 shrink-0 text-[11px] font-semibold leading-5 text-slate-400">{DOW_SHORT[(fromKey(i.date).getDay() + 6) % 7]}</span>
-              <span className="text-brand dark:text-white">{i.text}</span>
+              <span className="line-clamp-3 whitespace-pre-line text-brand dark:text-white" title={i.text}>
+                {i.text}
+              </span>
             </li>
           ))}
         </ul>

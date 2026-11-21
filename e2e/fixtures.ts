@@ -27,7 +27,7 @@ export async function moveClock(page: Page, isoLocal: string) {
 
 export const nav = (page: Page, name: string) => page.getByRole('navigation', { name: 'Main' }).first().getByRole('button', { name: new RegExp(`^${name}`) })
 export const modeTile = (page: Page, mode: 'Ceiling' | 'Floor' | 'Miss') =>
-  page.getByRole('radiogroup', { name: 'Day mode' }).getByRole('radio', { name: new RegExp(`^${mode}`) })
+  page.getByRole('radiogroup', { name: 'Day mode' }).getByRole('radio', { name: new RegExp(`^(Plan )?${mode}`) })
 export const timeline = (page: Page) => page.getByRole('list', { name: 'Timeline' })
 export const budget = (page: Page) => page.getByRole('region', { name: 'Weekly budget' })
 export const essentials = (page: Page) => page.getByRole('group', { name: 'Daily essentials' })

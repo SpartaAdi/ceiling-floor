@@ -6,18 +6,19 @@ import { durationLabel, nowMin, toMin } from '../lib/time'
 import { effectiveStatus } from '../lib/stats'
 import { useStore } from '../store/AppStore'
 import { HabitPill } from './HabitStrips'
-import { cx } from './ui'
+import { Time12, cx } from './ui'
 
-function TickButton({ kind, active, onClick, label }: { kind: 'done' | 'miss'; active: boolean; onClick: () => void; label: string }) {
+function TickButton({ kind, active, onClick, label, disabled }: { kind: 'done' | 'miss'; active: boolean; onClick: () => void; label: string; disabled?: boolean }) {
   const done = kind === 'done'
   return (
     <button
       onClick={onClick}
       aria-pressed={active}
       aria-label={label}
-      title={done ? 'Done' : 'Missed'}
+      disabled={disabled}
+      title={disabled ? 'Tick blocks on the day' : done ? 'Done' : 'Missed'}
       className={cx(
-        'flex size-10 shrink-0 items-center justify-center rounded-xl border-2 transition-all active:scale-90',
+        'flex size-10 shrink-0 items-center justify-center rounded-xl border-2 transition-all active:scale-90 disabled:pointer-events-none disabled:opacity-30',
         done
           ? active
             ? 'animate-pop border-ceiling bg-ceiling text-white shadow-md shadow-ceiling/30'
@@ -40,7 +41,9 @@ function BlockRow({
   isPast,
   onSet,
   extra,
+  readOnly,
 }: {
+  readOnly?: boolean
   block: Block
   status?: BlockStatus
   isNow: boolean
@@ -63,9 +66,9 @@ function BlockRow({
           isPast && !status && !isNow && 'opacity-70',
         )}
       >
-        <div className="w-14 shrink-0 font-mono tabular-nums">
-          <div className="text-sm font-semibold text-brand dark:text-white">{block.start}</div>
-          <div className="text-xs text-slate-400">{block.end}</div>
+        <div className="w-[76px] shrink-0 font-mono">
+          <Time12 hhmm={block.start} className="block text-sm font-semibold text-brand dark:text-white" />
+          <Time12 hhmm={block.end} end className="block text-xs text-slate-400" />
         </div>
         <span className={cx('h-10 w-1 shrink-0 rounded-full', cat.dot)} aria-hidden />
         <div className="min-w-0 flex-1">
@@ -93,8 +96,8 @@ function BlockRow({
           <span className="text-[11px] tabular-nums text-slate-400">{durationLabel(block.start, block.end)}</span>
         </div>
         <div className="flex shrink-0 gap-1.5">
-          <TickButton kind="done" active={status === 'completed'} onClick={() => onSet('completed')} label={`${block.title} done`} />
-          <TickButton kind="miss" active={status === 'missed'} onClick={() => onSet('missed')} label={`${block.title} missed`} />
+          <TickButton kind="done" disabled={readOnly} active={status === 'completed'} onClick={() => onSet('completed')} label={`${block.title} done`} />
+          <TickButton kind="miss" disabled={readOnly} active={status === 'missed'} onClick={() => onSet('missed')} label={`${block.title} missed`} />
         </div>
         {isNow && (
           <span className="absolute inset-x-0 bottom-0 h-1 bg-brand/10 dark:bg-accent/10" aria-hidden>
@@ -111,7 +114,7 @@ function BlockRow({
  * Block list for a day. When `live` (today), the block matching the current
  * time gets a NOW badge + progress bar and is scrolled into view on open.
  */
-export function Timeline({ date, day, blocks, now, live }: { date: string; day?: DayLog; blocks: Block[]; now?: Date; live?: boolean }) {
+export function Timeline({ date, day, blocks, now, live, readOnly }: { date: string; day?: DayLog; blocks: Block[]; now?: Date; live?: boolean; readOnly?: boolean }) {
   const { data, setBlockStatus, clearBlockStatus, toggleHabit } = useStore()
   const listRef = useRef<HTMLOListElement>(null)
   const m = now ? nowMin(now) : -1
@@ -139,6 +142,7 @@ export function Timeline({ date, day, blocks, now, live }: { date: string; day?:
           <BlockRow
             key={b.id}
             block={b}
+            readOnly={readOnly}
             status={status}
             isNow={isNow}
             progress={isNow ? Math.round(((m - start) / (end - start)) * 100) : 0}

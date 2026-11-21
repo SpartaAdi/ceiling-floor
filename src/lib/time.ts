@@ -47,7 +47,24 @@ export const toMin = (hhmm: string, isEnd = false) => {
 
 export const nowMin = (d: Date) => d.getHours() * 60 + d.getMinutes()
 
-export const fmtTime = (d: Date) => `${pad(d.getHours())}:${pad(d.getMinutes())}`
+/** 24h "HH:MM" → 12h parts. End-of-day "23:59" shows as 12:00 AM (midnight). */
+export function to12(hhmm: string, isEnd = false) {
+  let [h, m] = hhmm.split(':').map(Number)
+  if (isEnd && h === 23 && m === 59) {
+    h = 0
+    m = 0
+  }
+  return { time: `${h % 12 === 0 ? 12 : h % 12}:${pad(m)}`, period: h < 12 ? 'AM' : 'PM' }
+}
+
+/** "21:30" → "9:30 PM" */
+export const fmt12 = (hhmm: string, isEnd = false) => {
+  const t = to12(hhmm, isEnd)
+  return `${t.time} ${t.period}`
+}
+
+/** Device clock as 12-hour text, e.g. "9:05 PM" */
+export const fmtTime = (d: Date) => fmt12(`${pad(d.getHours())}:${pad(d.getMinutes())}`)
 
 export const DOW_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 export const DOW_LETTER = ['M', 'T', 'W', 'T', 'F', 'S', 'S']

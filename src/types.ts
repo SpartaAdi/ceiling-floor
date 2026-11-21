@@ -42,14 +42,19 @@ export interface Habit {
 }
 
 export interface Reflection {
-  win?: string
-  lesson?: string
+  win?: string // something positive today
+  grateful?: string
+  lesson?: string // a lesson to keep
+  bother?: string // something bothering me
+  why?: string // why it bothers me
   focus?: string // tomorrow's one focus
 }
 
 export interface DayLog {
   date: string // YYYY-MM-DD
   mode?: DayMode
+  /** Mode chosen in advance for a future day; auto-applied when the day arrives */
+  plan?: DayMode
   missReason?: string
   /** Template the snapshot came from */
   template?: TemplateKey

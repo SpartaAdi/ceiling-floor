@@ -59,6 +59,12 @@ export function weekReview(data: AppData, ws: string, today: string) {
     bottleneck: weakest(blockReport(days))[0] ?? null,
     wins: reflect((d) => d.reflection?.win),
     lessons: reflect((d) => d.reflection?.lesson),
+    grateful: reflect((d) => d.reflection?.grateful),
+    bothers: reflect((d) => {
+      const b = d.reflection?.bother
+      const w = d.reflection?.why
+      return b ? (w ? `${b} — because ${w}` : b) : undefined
+    }),
     missReasons: days.filter((d) => d.mode === 'miss').map((d) => d.missReason ?? 'No reason'),
     logged: days.filter((d) => d.mode).length,
   }

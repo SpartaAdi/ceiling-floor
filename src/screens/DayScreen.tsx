@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react'
-import { CalendarDays, ChevronLeft, ChevronRight, ClipboardCheck, Clock, Flag } from 'lucide-react'
+import { CalendarClock, CalendarDays, ChevronLeft, ChevronRight, ClipboardCheck, Clock, Flag } from 'lucide-react'
 import { FACET_BY_ID } from '../lib/facets'
 import { useDayView, useStore } from '../store/AppStore'
 import { addDays, dayTypeOf, fmtTime, fromKey, toKey, weekStartOf } from '../lib/time'
@@ -32,9 +32,11 @@ export function DayScreen({
   reviewDue: string | null
   onOpenReview: (ws: string) => void
 }) {
-  const { data, setDayMode } = useStore()
+  const { data, setDayMode, setPlan } = useStore()
   const today = toKey(now)
   const isToday = date === today
+  const future = date > today
+  const maxDate = addDays(today, 30) // plan up to a month ahead
   const week = useMemo(() => summarizeWeek(data, weekStartOf(date), today), [data, date, today])
   const { day, blocks, isPreview, template } = useDayView(date)
   const yesterdayFocus = data.days[addDays(today, -1)]?.reflection?.focus
@@ -47,16 +49,17 @@ export function DayScreen({
       const modes: Record<string, DayMode> = { c: 'ceiling', f: 'floor', m: 'miss' }
       const k = e.key.toLowerCase()
       if (modes[k]) {
-        if (data.days[date]?.mode !== modes[k]) setDayMode(date, modes[k])
+        if (future) setPlan(date, data.days[date]?.plan === modes[k] ? undefined : modes[k])
+        else if (data.days[date]?.mode !== modes[k]) setDayMode(date, modes[k])
       } else if (e.key === 'ArrowLeft') setDate(addDays(date, -1))
-      else if (e.key === 'ArrowRight' && date < today) setDate(addDays(date, 1))
+      else if (e.key === 'ArrowRight' && date < maxDate) setDate(addDays(date, 1))
       else if (k === 't') setDate(today)
       else return
       e.preventDefault()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [date, today, data.days, setDayMode, setDate])
+  }, [date, today, future, maxDate, data.days, setDayMode, setPlan, setDate])
 
   const title = isToday
     ? 'Today'
@@ -69,7 +72,12 @@ export function DayScreen({
         title={
           <span className="flex items-center gap-2">
             {title}
-            {!isToday && <span className="rounded-full bg-floor/15 px-2 py-0.5 text-xs font-semibold text-floor">Editing past day</span>}
+            {date < today && <span className="rounded-full bg-floor/15 px-2 py-0.5 text-xs font-semibold text-floor">Editing past day</span>}
+            {future && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-brand/10 px-2 py-0.5 text-xs font-semibold text-brand dark:bg-accent/15 dark:text-accent">
+                <CalendarClock size={12} /> Planning ahead
+              </span>
+            )}
           </span>
         }
         sub={`${fullDate} • ${dayTypeOf(date) === 'weekend' ? 'Weekend' : 'Weekday'}`}
@@ -94,7 +102,7 @@ export function DayScreen({
               </button>
               <button
                 onClick={() => setDate(addDays(date, 1))}
-                disabled={isToday}
+                disabled={date >= maxDate}
                 aria-label="Next day"
                 title="Next day (→)"
                 className="flex size-10 items-center justify-center rounded-r-xl text-slate-500 hover:bg-slate-100 hover:text-brand disabled:opacity-30 dark:hover:bg-night dark:hover:text-white"
@@ -156,22 +164,34 @@ export function DayScreen({
           )}
           <Card>
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-[15px] font-semibold text-brand dark:text-white">How did {isToday ? 'today' : 'this day'} go?</h2>
+              <h2 className="text-[15px] font-semibold text-brand dark:text-white">
+                {future ? 'Plan this day' : `How did ${isToday ? 'today' : 'this day'} go?`}
+              </h2>
               <span className="hidden items-center gap-1 text-[11px] text-slate-400 lg:flex">
                 Press <Kbd>C</Kbd> <Kbd>F</Kbd> <Kbd>M</Kbd>
               </span>
             </div>
-            <ModeTiles date={date} day={day} />
-            <MissReason date={date} day={day} />
+            <ModeTiles date={date} day={day} future={future} />
+            {!future && <MissReason date={date} day={day} />}
           </Card>
 
-          <Card className="flex flex-col gap-4">
-            <EssentialsStrip date={date} now={now} live={isToday} />
-            <CareStrip date={date} />
-          </Card>
+          {future ? (
+            <Card className="flex items-start gap-3">
+              <CalendarClock size={18} className="mt-0.5 shrink-0 text-brand dark:text-accent" />
+              <div className="text-sm">
+                <p className="font-semibold text-brand dark:text-white">Planned days</p>
+                <p className="text-slate-500 dark:text-slate-400">Count in the week forecast • Apply on the day • Tick blocks then</p>
+              </div>
+            </Card>
+          ) : (
+            <Card className="flex flex-col gap-4">
+              <EssentialsStrip date={date} now={now} live={isToday} />
+              <CareStrip date={date} />
+            </Card>
+          )}
 
-          <DayFacets day={day} blocks={blocks} />
-          <ReflectionCard key={date} date={date} day={day} />
+          <DayFacets day={day} blocks={blocks} future={future} />
+          {!future && <ReflectionCard key={date} date={date} day={day} />}
         </div>
 
         {/* Right: live focus + timeline */}
@@ -182,12 +202,18 @@ export function DayScreen({
             <div className="mb-2 flex items-baseline justify-between px-1">
               <h2 className="text-[15px] font-semibold text-brand dark:text-white">Timeline</h2>
               <span className={cx('text-xs', isPreview ? 'font-semibold text-floor' : 'text-slate-500 dark:text-slate-400')}>
-                {isPreview || !template ? 'Ceiling preview • Pick a mode to lock it' : `${TEMPLATE_LABELS[template]} • ${blocks.length} blocks`}
+                {future
+                  ? day?.plan && template
+                    ? `${TEMPLATE_LABELS[template]} • Planned • ${blocks.length} blocks`
+                    : 'Ceiling preview • Pick a plan'
+                  : isPreview || !template
+                    ? 'Ceiling preview • Pick a mode to lock it'
+                    : `${TEMPLATE_LABELS[template]} • ${blocks.length} blocks`}
               </span>
             </div>
-            <Timeline key={date} date={date} day={day} blocks={blocks} now={now} live={isToday} />
+            <Timeline key={date} date={date} day={day} blocks={blocks} now={now} live={isToday} readOnly={future} />
             <p className="mt-3 px-1 text-center text-[11px] text-slate-400">
-              Tick ✓ for done and ✕ for missed • Works on any day mode
+              {future ? 'Ticks unlock on the day' : 'Tick ✓ for done and ✕ for missed • Works on any day mode'}
             </p>
           </div>
         </div>

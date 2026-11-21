@@ -43,5 +43,14 @@ export function resetDayLog(d: AppData, date: string) {
   day.blocks = []
   day.statuses = {}
   delete day.missReason
+  delete day.plan // otherwise today's plan would re-apply immediately
+  day.updatedAt = Date.now()
+}
+
+/** Plan (or clear) a mode for a future day without logging anything. */
+export function setDayPlan(d: AppData, date: string, mode: DayMode | undefined) {
+  const day = ensureDay(d, date)
+  if (mode) day.plan = mode
+  else delete day.plan
   day.updatedAt = Date.now()
 }

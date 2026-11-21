@@ -3,6 +3,7 @@ import { Check, History, X } from 'lucide-react'
 import type { Block, DayLog } from '../types'
 import { nowMin, toMin } from '../lib/time'
 import { useStore } from '../store/AppStore'
+import { Time12 } from './ui'
 
 const dismissKey = (date: string) => `cfm:catchup-dismissed:${date}`
 
@@ -62,7 +63,7 @@ export function CatchUpCard({ date, day, blocks, now }: { date: string; day?: Da
       <ul className="flex flex-col gap-1">
         {pending.map((b) => (
           <li key={b.id} className="flex items-center gap-2 rounded-xl bg-white px-2.5 py-1 dark:bg-night-card">
-            <span className="w-11 font-mono text-xs tabular-nums text-slate-400">{b.start}</span>
+            <Time12 hhmm={b.start} className="w-[68px] font-mono text-xs text-slate-400" />
             <span className="min-w-0 flex-1 truncate text-sm font-medium text-brand dark:text-white">{b.title}</span>
             <button
               onClick={() => setBlockStatus(date, b.id, 'completed')}

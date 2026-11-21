@@ -4,8 +4,8 @@ import type { Block, Category, FacetId, Habit, HabitKind, TemplateKey } from '..
 import { FACETS, FACET_BY_ID } from '../lib/facets'
 import { useStore } from '../store/AppStore'
 import { CATEGORIES, CATEGORY_META, TEMPLATE_LABELS } from '../data/defaults'
-import { durationLabel, toMin } from '../lib/time'
-import { BottomSheet, Card, PageHeader, cx } from '../components/ui'
+import { durationLabel, fmt12, toMin } from '../lib/time'
+import { BottomSheet, Card, PageHeader, Time12, cx } from '../components/ui'
 
 type RTab = TemplateKey | 'habits'
 const TABS: { id: RTab; label: string }[] = [
@@ -96,9 +96,9 @@ function TemplateEditor({ tk }: { tk: TemplateKey }) {
         {blocks.map((b) => (
           <li key={b.id}>
             <div className="flex min-h-16 items-center gap-3 rounded-2xl border border-slate-200/80 bg-white px-3 py-2 dark:border-night-line dark:bg-night-card">
-              <div className="w-12 shrink-0 font-mono tabular-nums">
-                <div className="text-[13px] font-semibold text-brand dark:text-white">{b.start}</div>
-                <div className="text-[11px] text-slate-400">{b.end}</div>
+              <div className="w-[76px] shrink-0 font-mono">
+                <Time12 hhmm={b.start} className="block text-[13px] font-semibold text-brand dark:text-white" />
+                <Time12 hhmm={b.end} end className="block text-[11px] text-slate-400" />
               </div>
               <span className={cx('h-9 w-1 shrink-0 rounded-full', CATEGORY_META[b.category]?.dot)} />
               <button onClick={() => setEditing(b)} className="min-w-0 flex-1 text-left">
@@ -282,7 +282,7 @@ function HabitsEditor() {
                     )}
                     {h.nudgeAfter && (
                       <span className="inline-flex items-center gap-0.5 rounded-full bg-floor/10 px-1.5 py-0.5 text-[10px] text-floor">
-                        <Clock size={10} /> {h.nudgeAfter}
+                        <Clock size={10} /> {fmt12(h.nudgeAfter)}
                       </span>
                     )}
                   </button>
@@ -372,7 +372,7 @@ function HabitForm({ initial, onDone }: { initial: Habit; onDone: () => void }) 
       {h.kind === 'daily' && (
         <>
           <label className="flex min-h-11 items-center justify-between rounded-xl border border-slate-200 bg-white px-3 dark:border-night-line dark:bg-night-card">
-            <span className="text-sm font-medium text-brand dark:text-white">Night Care pill • after 21:00</span>
+            <span className="text-sm font-medium text-brand dark:text-white">Night Care pill • after 9 PM</span>
             <input
               type="checkbox"
               checked={!!h.evening}

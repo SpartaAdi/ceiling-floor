@@ -3,7 +3,7 @@ import type { AppData, Block, BlockStatus, DayMode, FacetId, Goal, Habit, Reflec
 import { createDefaultData, defaultHabits, defaultTemplates } from '../data/defaults'
 import { storage } from '../services/storageService'
 import { templateFor, toKey, toMin, weekStartOf } from '../lib/time'
-import { applyDayMode, ensureDay, ensureSnapshot, resetDayLog } from '../lib/dayLogic'
+import { applyDayMode, ensureDay, ensureSnapshot, resetDayLog, setDayPlan } from '../lib/dayLogic'
 import { periodFor } from '../lib/goals'
 import { withDemoData, withoutDemoData } from '../lib/demo'
 
@@ -18,6 +18,7 @@ interface Store {
   previewBlocks: (date: string) => { template: TemplateKey; blocks: Block[] }
   setDayMode: (date: string, mode: DayMode) => void
   resetDay: (date: string) => void
+  setPlan: (date: string, mode: DayMode | undefined) => void
   setBlockStatus: (date: string, blockId: string, status: BlockStatus) => void
   toggleBlock: (date: string, blockId: string) => void
   clearBlockStatus: (date: string, blockId: string) => void
@@ -102,6 +103,8 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
 
       resetDay: (date) => mutate((d) => resetDayLog(d, date)),
 
+      setPlan: (date, mode) => mutate((d) => setDayPlan(d, date, mode)),
+
       setBlockStatus: (date, blockId, status) =>
         mutate((d) => {
           const day = ensureSnapshot(d, date)
@@ -136,7 +139,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         mutate((d) => {
           const day = ensureDay(d, date)
           const r = (day.reflection ??= {})
-          const v = text.trim().slice(0, 80)
+          const v = text.trim().slice(0, 5000)
           if (v) r[field] = v
           else delete r[field]
           day.updatedAt = Date.now()
@@ -278,6 +281,11 @@ export function useDayView(date: string) {
   const { data, previewBlocks } = useStore()
   const day = data.days[date]
   const snapshot = day && day.blocks.length > 0
-  const { blocks, template } = snapshot ? { blocks: day.blocks, template: day.template } : previewBlocks(date)
+  const plannedTk = !snapshot && day?.plan ? templateFor(date, day.plan) : undefined
+  const { blocks, template } = snapshot
+    ? { blocks: day.blocks, template: day.template }
+    : plannedTk
+      ? { blocks: data.templates[plannedTk], template: plannedTk }
+      : previewBlocks(date)
   return { day, blocks, template, isPreview: !snapshot }
 }

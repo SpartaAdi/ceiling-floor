@@ -44,7 +44,7 @@ function useTheme() {
 const TAB_KEYS: Record<string, Tab> = { '1': 'today', '2': 'dashboard', '3': 'goals', '4': 'review', '5': 'routine', '6': 'settings' }
 
 export default function App() {
-  const { ready, toast, data } = useStore()
+  const { ready, toast, data, setDayMode, notify } = useStore()
   const now = useNow()
   const today = toKey(now)
   const [tab, setTab] = useState<Tab>(readTab)
@@ -66,7 +66,15 @@ export default function App() {
     window.scrollTo({ top: 0 })
   }, [])
 
-  const setDate = useCallback((d: string) => setViewDate(d >= today ? null : d), [today])
+  const setDate = useCallback((d: string) => setViewDate(d === today ? null : d), [today])
+
+  // A day planned in advance becomes that mode when it arrives
+  const todayPlan = data.days[today]?.mode ? undefined : data.days[today]?.plan
+  useEffect(() => {
+    if (!ready || !todayPlan) return
+    setDayMode(today, todayPlan)
+    notify(`Today's plan applied • ${todayPlan[0].toUpperCase()}${todayPlan.slice(1)}`)
+  }, [ready, today, todayPlan, setDayMode, notify])
   const openDay = useCallback(
     (d: string) => {
       setDate(d)

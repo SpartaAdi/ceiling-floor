@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { applyDayMode, ensureSnapshot, resetDayLog } from '../dayLogic'
+import { applyDayMode, ensureSnapshot, resetDayLog, setDayPlan } from '../dayLogic'
 import { MON, SAT, fresh, logDay } from './helpers'
 
 describe('applyDayMode', () => {
@@ -55,5 +55,24 @@ describe('applyDayMode', () => {
     expect(d.days[MON].blocks).toHaveLength(0)
     expect(d.days[MON].habits.meds).toBe(true)
     expect(d.days[MON].energy).toBe(4)
+  })
+})
+
+describe('day plans', () => {
+  it('sets and clears a plan without logging the day', () => {
+    const d = fresh()
+    setDayPlan(d, SAT, 'floor')
+    expect(d.days[SAT]).toMatchObject({ plan: 'floor', blocks: [] })
+    expect(d.days[SAT].mode).toBeUndefined()
+    setDayPlan(d, SAT, undefined)
+    expect(d.days[SAT].plan).toBeUndefined()
+  })
+  it('applying the mode keeps the plan for reference; reset clears both', () => {
+    const d = fresh()
+    setDayPlan(d, MON, 'floor')
+    applyDayMode(d, MON, 'floor')
+    expect(d.days[MON]).toMatchObject({ mode: 'floor', plan: 'floor', template: 'weekday-floor' })
+    resetDayLog(d, MON)
+    expect(d.days[MON].plan).toBeUndefined()
   })
 })

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { blockReport, blockScore, breakdown, classifyWeek, effectiveStatus, monthGrid, nonMissStreak, rangeFor, strongest, summarizeWeek, weakest } from '../stats'
 import { FRI, MON, SAT, SUN, THU, TUE, WED, fresh, logDay } from './helpers'
+import { setDayPlan } from '../dayLogic'
 import { addDays } from '../time'
 
 const T = { ceiling: 5, floor: 2, miss: 0 }
@@ -135,5 +136,44 @@ describe('streaks and ranges', () => {
     expect(g.length % 7).toBe(0)
     expect(g.indexOf('2026-11-01')).toBe(6) // 1 Nov 2026 is a Sunday
     expect(g.filter(Boolean)).toHaveLength(30)
+  })
+})
+
+describe('planned future days', () => {
+  it('count toward the forecast without counting as logged', () => {
+    const d = fresh()
+    for (const k of [MON, TUE, WED]) logDay(d, k, 'ceiling')
+    setDayPlan(d, SAT, 'floor')
+    setDayPlan(d, SUN, 'floor')
+    const s = summarizeWeek(d, MON, THU)
+    expect(s.ceiling).toBe(3)
+    expect(s.floor).toBe(0) // plans are not results
+    expect(s.planned).toEqual({ ceiling: 0, floor: 2, miss: 0 })
+    expect(s.floorLeft).toBe(2)
+    expect(s.forecast).toBe('0 Floors left • Hold Ceiling') // Thu + Fri must be Ceiling
+    expect(s.days.find((x) => x.key === SAT)?.plan).toBe('floor')
+  })
+  it('a planned Miss lowers the projected week', () => {
+    const d = fresh()
+    setDayPlan(d, FRI, 'miss')
+    const s = summarizeWeek(d, MON, MON)
+    expect(s.projected).toBe('amber')
+    expect(s.forecast).toBe('3 more Ceiling days for Amber')
+  })
+  it('when every open day is planned, says the plan decides the week', () => {
+    const d = fresh()
+    for (const k of [MON, TUE, WED, THU]) logDay(d, k, 'ceiling')
+    setDayPlan(d, FRI, 'ceiling')
+    setDayPlan(d, SAT, 'floor')
+    setDayPlan(d, SUN, 'floor')
+    expect(summarizeWeek(d, MON, FRI).forecast).toBe('Plan → Green Week • Stick to it')
+  })
+  it('a logged mode overrides the plan', () => {
+    const d = fresh()
+    setDayPlan(d, MON, 'floor')
+    logDay(d, MON, 'ceiling')
+    const s = summarizeWeek(d, MON, MON)
+    expect(s.days[0]).toMatchObject({ mode: 'ceiling', plan: undefined })
+    expect(s.planned.floor).toBe(0)
   })
 })

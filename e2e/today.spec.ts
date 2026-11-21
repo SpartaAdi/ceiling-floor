@@ -4,14 +4,17 @@ import { budget, essentials, expect, modeTile, moveClock, openAt, test, timeline
 test('real-time focus, catch-up and night-care nudges', async ({ page, errors: _ }) => {
   await openAt(page, '2026-11-18T21:05:00')
   await expect(page.getByRole('heading', { name: 'Today', exact: true })).toBeVisible()
-  await expect(page.getByText('21:05')).toBeVisible()
+  await expect(page.locator('header').getByText('9:05 PM')).toBeVisible()
 
   // NOW block + Now/Next card
   const nowRow = timeline(page).locator('li[data-now]')
   await expect(nowRow).toContainText('Night Care')
   await expect(nowRow).toContainText('NOW')
+  await expect(nowRow).toContainText('9:00PM')
+  await expect(timeline(page).locator('li').last()).toContainText('10:00PM12:00AM') // Sleep ends at midnight
   const now = page.getByRole('region', { name: 'Now and next' })
   await expect(now).toContainText('Night Care')
+  await expect(now).toContainText('9:00 PM – 9:30 PM')
   await expect(now).toContainText('25m left')
   await expect(now).toContainText('Reading')
 
@@ -90,10 +93,11 @@ test('day navigation, past-day editing and week strip', async ({ page, errors: _
   await page.keyboard.press('t')
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Today')
   await expect(budget(page).getByRole('listitem', { name: /2026-11-17 • Floor/ })).toBeVisible()
-  // future days disabled; can't go past today
-  await expect(budget(page).getByRole('listitem', { name: /^2026-11-19/ })).toBeDisabled()
+  // future days open in planning mode
   await page.keyboard.press('ArrowRight')
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Today')
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Thursday')
+  await expect(page.getByText('Planning ahead')).toBeVisible()
+  await page.keyboard.press('t')
 
   await budget(page).getByRole('listitem', { name: /^2026-11-16/ }).click()
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Monday')
@@ -117,18 +121,112 @@ test('Green → Amber week health with live forecast', async ({ page, errors: _ 
   await expect(budget(page)).toContainText('Amber Week')
 })
 
-test('check-in persists and feeds tomorrow’s focus', async ({ page, errors: _ }) => {
+test('check-in: prompts open a writing dialog, save long notes, feed tomorrow', async ({ page, errors: _ }) => {
   await openAt(page, '2026-11-18T22:10:00')
+  const prompts = page.getByRole('list', { name: 'Reflection prompts' })
+  await expect(prompts.getByRole('button')).toHaveCount(6)
+  for (const t of ['Something positive today', "I'm grateful for", 'Lesson to keep', 'Something bothering me', 'Why it bothers me', 'Focus for tomorrow'])
+    await expect(prompts.getByRole('button', { name: new RegExp(`^${t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`) })).toBeVisible()
+
   await page.getByRole('radio', { name: /^4/ }).click()
-  await page.getByPlaceholder('One thing that went well').fill('Shipped the review page')
-  await page.getByPlaceholder('The one thing that matters').fill('Deep Block before noon')
-  await page.getByPlaceholder('The one thing that matters').press('Enter')
+
+  // Long, multi-line win
+  const long = 'Shipped the review page.\n\nAlso had a calm, focused morning — no phone until 10, deep block done before lunch, and a long walk with Bunny in the evening. ' + 'More detail. '.repeat(20)
+  await prompts.getByRole('button', { name: /^Something positive today/ }).click()
+  const dlg = page.getByRole('dialog', { name: 'Something positive today' })
+  await expect(dlg).toBeVisible()
+  const pad = dlg.getByRole('textbox', { name: 'Something positive today' })
+  await expect(pad).toBeFocused()
+  await pad.fill(long)
+  await dlg.getByRole('button', { name: 'Save' }).click()
+  await expect(dlg).toBeHidden()
+  await expect(prompts.getByRole('button', { name: /^Something positive today • written/ })).toContainText('Shipped the review page.')
+
+  // Cancel discards edits
+  await prompts.getByRole('button', { name: /^Something bothering me/ }).click()
+  await page.getByRole('textbox', { name: 'Something bothering me' }).fill('should not save')
+  await page.getByRole('button', { name: 'Cancel' }).click()
+  await expect(prompts.getByRole('button', { name: /^Something bothering me/ })).toContainText('Click to write')
+
+  // ⌘+Enter saves
+  await prompts.getByRole('button', { name: /^Focus for tomorrow/ }).click()
+  await page.getByRole('textbox', { name: 'Focus for tomorrow' }).fill('Deep Block before noon')
+  await page.keyboard.press('ControlOrMeta+Enter')
+  await expect(page.getByRole('dialog')).toBeHidden()
+  await expect(page.getByText('3/6').or(page.getByText('2/6')).first()).toBeVisible()
+
+  // Persists in full after reload
   await page.reload()
   await expect(page.getByRole('radio', { name: /^4/ })).toHaveAttribute('aria-checked', 'true')
-  await expect(page.getByPlaceholder('One thing that went well')).toHaveValue('Shipped the review page')
+  await prompts.getByRole('button', { name: /^Something positive today/ }).click()
+  await expect(page.getByRole('textbox', { name: 'Something positive today' })).toHaveValue(long.trim())
+  await page.keyboard.press('Escape')
 
+  // Tomorrow's Now card shows the focus
   await moveClock(page, '2026-11-19T07:00:00')
   await expect(page.getByRole('region', { name: 'Now and next' })).toContainText('Deep Block before noon')
+})
+
+test('plan future days in advance; plan applies when the day arrives', async ({ page, errors: _ }) => {
+  await openAt(page, '2026-11-16T20:00:00') // Monday — whole week ahead
+  await page.keyboard.press('ArrowRight')
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Tuesday')
+  await expect(page.getByRole('heading', { name: 'Plan this day' })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Now and next' })).toBeHidden()
+  await expect(page.getByRole('list', { name: 'Reflection prompts' })).toBeHidden()
+
+  // Plan Floor via keyboard
+  await page.keyboard.press('f')
+  await expect(modeTile(page, 'Floor')).toHaveAttribute('aria-checked', 'true')
+  await expect(page.getByText(/Planned Floor • Applies on the day/)).toBeVisible()
+  await expect(page.getByText('Weekday Floor • Planned • 9 blocks')).toBeVisible()
+  await expect(timeline(page).getByRole('button', { name: 'Gym done' }).or(timeline(page).getByRole('button', { name: 'Home Morning done' })).first()).toBeDisabled()
+  await expect(budget(page).getByRole('listitem', { name: '2026-11-17 • Planned Floor' })).toBeVisible()
+  await expect(budget(page)).toContainText('−1 planned')
+  await expect(budget(page)).toContainText('5 more Ceiling days for Green')
+
+  // Plan Saturday as Miss from the week strip; budget forecast reacts
+  await budget(page).getByRole('listitem', { name: /^2026-11-21/ }).click()
+  await modeTile(page, 'Miss').click()
+  await expect(budget(page)).toContainText('+1 planned')
+  await expect(budget(page)).toContainText('Amber Week')
+  await expect(budget(page)).toContainText('3 more Ceiling days for Amber')
+  // click again clears the plan
+  await modeTile(page, 'Miss').click()
+  await expect(modeTile(page, 'Miss')).toHaveAttribute('aria-checked', 'false')
+  await expect(budget(page)).toContainText('Green Week')
+  await expect(budget(page)).toContainText('5 more Ceiling days for Green')
+
+  // Plans are not results: still 0 floors used
+  await page.keyboard.press('t')
+  await expect(budget(page)).toContainText('Floor Left2')
+
+  // Next day: plan auto-applies with all blocks ticked
+  await moveClock(page, '2026-11-17T07:00:00')
+  await expect(page.getByRole('status')).toContainText("Today's plan applied • Floor")
+  await expect(modeTile(page, 'Floor')).toHaveAttribute('aria-checked', 'true')
+  await expect(page.getByText(/Floor day • 9\/9 blocks done/)).toBeVisible()
+  await expect(page.getByText('• as planned')).toBeVisible()
+  await expect(budget(page)).toContainText('Floor Left1')
+
+  // Reset doesn't immediately re-apply the plan
+  await page.getByRole('button', { name: 'Reset', exact: true }).click()
+  await expect(page.getByText('No mode yet • Pick how today went')).toBeVisible()
+  await page.reload()
+  await expect(page.getByText('No mode yet • Pick how today went')).toBeVisible()
+})
+
+test('calendar lets you plan future days', async ({ page, errors: _ }) => {
+  await openAt(page, '2026-11-18T12:00:00')
+  await page.keyboard.press('2')
+  await page.getByRole('button', { name: /^2026-11-27/ }).click()
+  await expect(page.getByText('Planning ahead')).toBeVisible()
+  await modeTile(page, 'Ceiling').click()
+  await page.keyboard.press('2')
+  await expect(page.getByRole('button', { name: '2026-11-27 • Planned Ceiling' })).toBeVisible()
+  await page.getByRole('button', { name: 'Next month' }).click()
+  await expect(page.getByRole('button', { name: /^2026-12-15/ })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Next month' })).toBeDisabled()
 })
 
 test('weekend care is tracked once per week', async ({ page, errors: _ }) => {
@@ -150,7 +248,7 @@ test('clock refreshes every minute and moves NOW', async ({ page, errors: _ }) =
   await openAt(page, '2026-11-18T21:29:30')
   await expect(timeline(page).locator('li[data-now]')).toContainText('Night Care')
   await page.clock.runFor(61_000)
-  await expect(page.locator('header').getByText('21:30')).toBeVisible()
+  await expect(page.locator('header').getByText('9:30 PM')).toBeVisible()
   await expect(timeline(page).locator('li[data-now]')).toContainText('Reading')
 })
 

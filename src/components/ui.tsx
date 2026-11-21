@@ -1,13 +1,14 @@
 import { useEffect, type ReactNode } from 'react'
 import { X } from 'lucide-react'
 import type { DayMode } from '../types'
+import { to12 } from '../lib/time'
 
 export const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(' ')
 
-export const MODE_META: Record<DayMode, { label: string; text: string; bg: string; soft: string; ring: string; dot: string }> = {
-  ceiling: { label: 'Ceiling', text: 'text-ceiling', bg: 'bg-ceiling', soft: 'bg-ceiling/10', ring: 'ring-ceiling', dot: 'bg-ceiling' },
-  floor: { label: 'Floor', text: 'text-floor', bg: 'bg-floor', soft: 'bg-floor/10', ring: 'ring-floor', dot: 'bg-floor' },
-  miss: { label: 'Miss', text: 'text-miss', bg: 'bg-miss', soft: 'bg-miss/10', ring: 'ring-miss', dot: 'bg-miss' },
+export const MODE_META: Record<DayMode, { label: string; text: string; bg: string; soft: string; ring: string; dot: string; border: string }> = {
+  ceiling: { label: 'Ceiling', text: 'text-ceiling', bg: 'bg-ceiling', soft: 'bg-ceiling/10', ring: 'ring-ceiling', dot: 'bg-ceiling', border: 'border-ceiling' },
+  floor: { label: 'Floor', text: 'text-floor', bg: 'bg-floor', soft: 'bg-floor/10', ring: 'ring-floor', dot: 'bg-floor', border: 'border-floor' },
+  miss: { label: 'Miss', text: 'text-miss', bg: 'bg-miss', soft: 'bg-miss/10', ring: 'ring-miss', dot: 'bg-miss', border: 'border-miss' },
 }
 
 export function Card({ children, className }: { children: ReactNode; className?: string }) {
@@ -83,12 +84,14 @@ export function BottomSheet({
   title,
   sub,
   children,
+  wide = false,
 }: {
   open: boolean
   onClose: () => void
   title: string
   sub?: string
   children: ReactNode
+  wide?: boolean
 }) {
   useEffect(() => {
     if (!open) return
@@ -106,7 +109,7 @@ export function BottomSheet({
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center md:p-6" role="dialog" aria-modal="true" aria-label={title}>
       <button aria-label="Close" className="animate-fade absolute inset-0 bg-brand/40 backdrop-blur-[2px]" onClick={onClose} />
-      <div className="animate-sheet md:animate-fade relative flex max-h-[88dvh] w-full max-w-[560px] flex-col rounded-t-3xl bg-paper pb-safe shadow-2xl md:rounded-3xl dark:bg-night">
+      <div className={cx('animate-sheet md:animate-fade relative flex max-h-[88dvh] w-full flex-col', wide ? 'max-w-[760px]' : 'max-w-[560px]', 'rounded-t-3xl bg-paper pb-safe shadow-2xl md:rounded-3xl dark:bg-night')}>
         <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-slate-300 md:hidden dark:bg-night-line" />
         <div className="flex items-center justify-between gap-3 px-4 pb-2 pt-3">
           <div className="min-w-0">
@@ -169,4 +172,15 @@ export function PageHeader({ title, sub, right }: { title: ReactNode; sub?: Reac
 
 export function Label({ children, className }: { children: ReactNode; className?: string }) {
   return <p className={cx('mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400', className)}>{children}</p>
+}
+
+/** 12-hour time with a smaller AM/PM, e.g. 9:30<sub>PM</sub>. Pass `end` for block end times. */
+export function Time12({ hhmm, end = false, className }: { hhmm: string; end?: boolean; className?: string }) {
+  const t = to12(hhmm, end)
+  return (
+    <span className={cx('whitespace-nowrap tabular-nums', className)}>
+      {t.time}
+      <span className="ml-0.5 text-[0.72em] font-semibold opacity-70">{t.period}</span>
+    </span>
+  )
 }

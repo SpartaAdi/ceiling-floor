@@ -4,11 +4,12 @@ import { DOW_SHORT, fromKey } from '../lib/time'
 import type { Targets } from '../types'
 import { MODE_META, cx } from './ui'
 
-function Chip({ label, value, tone }: { label: string; value: string; tone: string }) {
+function Chip({ label, value, tone, note }: { label: string; value: string; tone: string; note?: string }) {
   return (
     <div className={cx('flex min-w-[84px] flex-col items-center justify-center rounded-xl px-3 py-2', tone)}>
       <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">{label}</span>
       <span className="text-lg font-bold leading-tight tabular-nums">{value}</span>
+      {note && <span className="text-[10px] font-semibold opacity-75">{note}</span>}
     </div>
   )
 }
@@ -44,10 +45,21 @@ export function WeekBar({
           </p>
         </div>
         <div className="flex gap-2">
-          <Chip label="Ceiling" value={`${week.ceiling}/${targets.ceiling}`} tone="bg-ceiling/10 text-ceiling" />
-          <Chip label="Floor Left" value={over ? `+${-week.floorLeft} over` : String(week.floorLeft)} tone={over ? 'bg-miss/10 text-miss' : 'bg-floor/10 text-floor'} />
+          <Chip
+            label="Ceiling"
+            value={`${week.ceiling}/${targets.ceiling}`}
+            tone="bg-ceiling/10 text-ceiling"
+            note={week.planned.ceiling ? `+${week.planned.ceiling} planned` : undefined}
+          />
+          <Chip
+            label="Floor Left"
+            value={over ? `+${-week.floorLeft} over` : String(week.floorLeft)}
+            tone={over || week.floorLeft - week.planned.floor < 0 ? 'bg-miss/10 text-miss' : 'bg-floor/10 text-floor'}
+            note={week.planned.floor ? `−${week.planned.floor} planned` : undefined}
+          />
           <Chip
             label="Miss"
+            note={week.planned.miss ? `+${week.planned.miss} planned` : undefined}
             value={String(week.miss)}
             tone={week.miss > targets.miss ? 'bg-miss/15 text-miss' : 'bg-slate-100 text-slate-500 dark:bg-night dark:text-slate-300'}
           />
@@ -57,19 +69,19 @@ export function WeekBar({
       <div className="grid flex-1 grid-cols-7 gap-1.5 xl:ml-auto xl:max-w-[520px]" role="list" aria-label="This week">
         {week.days.map((d, i) => {
           const m = d.mode ? MODE_META[d.mode] : null
+          const p = !m && d.plan ? MODE_META[d.plan] : null
           const isSel = d.key === selected
           return (
             <button
               key={d.key}
               role="listitem"
-              disabled={d.future}
               onClick={() => onSelect(d.key)}
-              aria-label={`${d.key}${m ? ` • ${m.label}` : ''}`}
+              aria-label={`${d.key}${m ? ` • ${m.label}` : p ? ` • Planned ${p.label}` : ''}`}
               aria-current={isSel ? 'date' : undefined}
               className={cx(
                 'flex flex-col items-center gap-1 rounded-xl border-2 py-1.5 transition-colors',
                 isSel ? 'border-brand bg-brand/5 dark:border-accent dark:bg-accent/5' : 'border-transparent hover:bg-slate-100 dark:hover:bg-night',
-                d.future && 'opacity-40',
+                d.future && !p && 'opacity-60',
               )}
             >
               <span className={cx('text-[10px] font-bold uppercase', d.isToday ? 'text-brand dark:text-accent' : 'text-slate-400')}>
@@ -78,12 +90,18 @@ export function WeekBar({
               <span
                 className={cx(
                   'flex size-9 items-center justify-center rounded-full text-sm font-bold tabular-nums',
-                  m ? cx(m.bg, 'text-white') : 'bg-slate-100 text-slate-500 dark:bg-night dark:text-slate-300',
+                  m
+                    ? cx(m.bg, 'text-white')
+                    : p
+                      ? cx('border-2 border-dashed bg-white dark:bg-night', p.text, p.border)
+                      : 'bg-slate-100 text-slate-500 dark:bg-night dark:text-slate-300',
                 )}
               >
                 {fromKey(d.key).getDate()}
               </span>
-              <span className={cx('text-[9px] font-semibold uppercase', m ? m.text : 'text-transparent')}>{m?.label ?? '—'}</span>
+              <span className={cx('text-[9px] font-semibold uppercase', m ? m.text : p ? cx(p.text, 'opacity-80') : 'text-transparent')}>
+                {m?.label ?? (p ? `Plan ${p.label}` : '—')}
+              </span>
             </button>
           )
         })}

@@ -102,6 +102,10 @@ describe('weekly review', () => {
     expect(r.avgEnergy).toBe(3)
     expect(r.wins).toEqual([{ date: MON, text: 'Shipped' }])
     expect(r.missReasons).toEqual(['Sick'])
+    d.days[TUE].reflection = { grateful: 'Family dinner', bother: 'Late emails', why: 'They break my evening' }
+    const r2 = weekReview(d, MON, THU)
+    expect(r2.grateful).toEqual([{ date: TUE, text: 'Family dinner' }])
+    expect(r2.bothers).toEqual([{ date: TUE, text: 'Late emails — because They break my evening' }])
     expect(r.habits.find((h) => h.habit.id === 'meds')).toMatchObject({ done: 1, of: 4 })
     expect(r.goals[0].ev.value).toBe(5) // 2.5h + 2.5h deep
     expect(r.goals[0].ev.status).toBe('done')

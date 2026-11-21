@@ -585,18 +585,17 @@ function Heatmap({ today, onPick }: { today: string; onPick: (d: string) => void
     const d = fromKey(month)
     setMonth(toKey(new Date(d.getFullYear(), d.getMonth() + n, 1)))
   }
-  const isCurrent = month.slice(0, 7) === today.slice(0, 7)
   return (
     <Card>
       <CardTitle
         title="Calendar"
-        sub={`${fmtMonth(month)} • Click a day to open it`}
+        sub={`${fmtMonth(month)} • Click a day to open or plan it`}
         right={
           <div className="-mr-1 -mt-1 flex">
             <IconBtn label="Previous month" onClick={() => shift(-1)}>
               <ChevronLeft size={18} />
             </IconBtn>
-            <IconBtn label="Next month" onClick={() => shift(1)} disabled={isCurrent}>
+            <IconBtn label="Next month" onClick={() => shift(1)} disabled={month.slice(0, 7) > today.slice(0, 7)}>
               <ChevronRight size={18} />
             </IconBtn>
           </div>
@@ -612,18 +611,22 @@ function Heatmap({ today, onPick }: { today: string; onPick: (d: string) => void
           if (!k) return <span key={i} />
           const day = data.days[k]
           const mode = day?.mode
+          const plan = !mode ? day?.plan : undefined
           const future = k > today
           return (
             <button
               key={k}
-              disabled={future}
               onClick={() => onPick(k)}
-              title={mode ? `${MODE_META[mode].label}${day?.energy ? ` • Energy ${day.energy}` : ''}` : 'Not logged'}
-              aria-label={`${k}${mode ? ` • ${MODE_META[mode].label}` : ''}`}
+              title={mode ? `${MODE_META[mode].label}${day?.energy ? ` • Energy ${day.energy}` : ''}` : plan ? `Planned ${MODE_META[plan].label}` : future ? 'Plan this day' : 'Not logged'}
+              aria-label={`${k}${mode ? ` • ${MODE_META[mode].label}` : plan ? ` • Planned ${MODE_META[plan].label}` : ''}`}
               className={cx(
                 'flex h-10 items-center justify-center rounded-lg text-xs font-semibold tabular-nums transition-transform hover:scale-105',
-                mode ? cx(MODE_META[mode].bg, 'text-white') : 'bg-slate-100 text-slate-500 dark:bg-night dark:text-slate-400',
-                future && 'opacity-35 hover:scale-100',
+                mode
+                  ? cx(MODE_META[mode].bg, 'text-white')
+                  : plan
+                    ? cx('border-2 border-dashed bg-white dark:bg-night', MODE_META[plan].border, MODE_META[plan].text)
+                    : 'bg-slate-100 text-slate-500 dark:bg-night dark:text-slate-400',
+                future && !plan && 'opacity-50',
                 k === today && 'ring-2 ring-brand ring-offset-2 ring-offset-white dark:ring-accent dark:ring-offset-night-card',
               )}
             >
@@ -638,6 +641,9 @@ function Heatmap({ today, onPick }: { today: string; onPick: (d: string) => void
             <span className={cx('size-2.5 rounded-sm', MODE_META[md].bg)} /> {MODE_META[md].label}
           </span>
         ))}
+        <span className="inline-flex items-center gap-1">
+          <span className="size-2.5 rounded-sm border border-dashed border-slate-400" /> Planned
+        </span>
       </div>
     </Card>
   )
