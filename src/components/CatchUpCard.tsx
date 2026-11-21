@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Check, History, X } from 'lucide-react'
+import { Check, EyeOff, History, X } from 'lucide-react'
 import type { Block, DayLog } from '../types'
 import { nowMin, toMin } from '../lib/time'
 import { useStore } from '../store/AppStore'
@@ -41,22 +41,33 @@ export function CatchUpCard({ date, day, blocks, now }: { date: string; day?: Da
           <History size={16} className="text-brand dark:text-accent" />
           <div>
             <h2 className="text-sm font-semibold text-brand dark:text-white">Earlier Today</h2>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">{pending.length} unlogged • Tap ✓ or ✕</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">{pending.length} unlogged • Mark each, or all at once</p>
           </div>
         </div>
-        <div className="flex items-center">
+        <div className="flex items-center gap-1.5">
           <button
             onClick={() => pending.forEach((b) => setBlockStatus(date, b.id, 'completed'))}
-            className="min-h-11 rounded-lg px-2 text-xs font-semibold text-ceiling"
+            aria-label="Mark all done"
+            title="Mark every block above as done"
+            className="inline-flex h-9 items-center gap-1 rounded-lg border-2 border-ceiling/40 bg-white px-2.5 text-xs font-bold text-ceiling hover:border-ceiling hover:bg-ceiling/10 dark:bg-night-card"
           >
-            All ✓
+            <Check size={14} strokeWidth={3} /> All done
+          </button>
+          <button
+            onClick={() => pending.forEach((b) => setBlockStatus(date, b.id, 'missed'))}
+            aria-label="Mark all missed"
+            title="Mark every block above as missed"
+            className="inline-flex h-9 items-center gap-1 rounded-lg border-2 border-miss/40 bg-white px-2.5 text-xs font-bold text-miss hover:border-miss hover:bg-miss/10 dark:bg-night-card"
+          >
+            <X size={14} strokeWidth={3} /> All missed
           </button>
           <button
             onClick={dismiss}
-            aria-label="Dismiss"
-            className="flex size-11 items-center justify-center rounded-lg text-slate-400 hover:text-brand dark:hover:text-white"
+            aria-label="Hide for now"
+            title="Hide this card • Blocks stay unlogged • Log them on the timeline"
+            className="inline-flex h-9 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-slate-400 hover:bg-white hover:text-brand dark:hover:bg-night-card dark:hover:text-white"
           >
-            <X size={18} />
+            <EyeOff size={14} /> Hide
           </button>
         </div>
       </div>

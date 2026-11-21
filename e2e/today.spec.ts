@@ -23,7 +23,7 @@ test('real-time focus, catch-up and night-care nudges', async ({ page, errors: _
   await expect(catchUp).toContainText('11 unlogged')
   await catchUp.getByRole('button', { name: 'Morning Reset missed' }).click()
   await expect(catchUp).toContainText('10 unlogged')
-  await catchUp.getByRole('button', { name: 'All ✓' }).click()
+  await catchUp.getByRole('button', { name: 'Mark all done' }).click()
   await expect(catchUp).toBeHidden()
 
   // Evening habits inline in Night Care, synced with the essentials strip
@@ -41,6 +41,29 @@ test('real-time focus, catch-up and night-care nudges', async ({ page, errors: _
   await expect(modeTile(page, 'Ceiling')).toHaveAttribute('aria-checked', 'true')
   await expect(page.getByText('Ceiling day • 13/14 blocks done')).toBeVisible()
   await expect(budget(page)).toContainText('1/5')
+})
+
+test('Earlier Today: mark all missed in one click', async ({ page, errors: _ }) => {
+  await openAt(page, '2026-11-18T10:00:00') // 5 blocks have ended by 10:00 AM
+  const card = page.getByRole('region', { name: 'Earlier Today' })
+  await expect(card).toContainText('5 unlogged')
+  await card.getByRole('button', { name: 'Mark all missed' }).click()
+  await expect(card).toBeHidden()
+  for (const t of ['Morning Reset', 'Yoga & Mind', 'Gym Prep', 'Gym', 'Shake & Bath'])
+    await expect(timeline(page).getByRole('button', { name: `${t} missed` })).toHaveAttribute('aria-pressed', 'true')
+  await expect(timeline(page).getByRole('button', { name: 'Morning Sitting missed' })).toHaveAttribute('aria-pressed', 'false')
+  // Choosing the day mode afterwards keeps those misses
+  await page.keyboard.press('c')
+  await expect(page.getByText('Ceiling day • 9/14 blocks done')).toBeVisible()
+})
+
+test('Earlier Today: hide is clearly separate and logs nothing', async ({ page, errors: _ }) => {
+  await openAt(page, '2026-11-18T10:00:00')
+  const card = page.getByRole('region', { name: 'Earlier Today' })
+  await card.getByRole('button', { name: 'Hide for now' }).click()
+  await expect(card).toBeHidden()
+  await expect(timeline(page).getByRole('button', { name: 'Gym missed' })).toHaveAttribute('aria-pressed', 'false')
+  await expect(timeline(page).getByRole('button', { name: 'Gym done' })).toHaveAttribute('aria-pressed', 'false')
 })
 
 test('mode switching, block overrides and weekly counters', async ({ page, errors: _ }) => {
