@@ -7,7 +7,9 @@
 //     → prints the PUBLIC key for Vercel (VITE_VAPID_PUBLIC_KEY).
 import { generateKeyPairSync, randomBytes } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
-import { readFileSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 
 const [ref, contact] = process.argv.slice(2)
 if (!ref || !/^[a-z0-9]{10,}$/.test(ref) || !contact || !contact.includes('@')) {
@@ -24,13 +26,32 @@ const vapidPrivate = priv.d
 const cronSecret = randomBytes(32).toString('hex')
 
 const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx'
-const run = (args) => execFileSync(npx, ['--yes', 'supabase', ...args], { stdio: ['ignore', 'inherit', 'inherit'] })
+/** Run the Supabase CLI. Never echoes arguments or error text that could contain secrets. */
+const run = (label, args) => {
+  try {
+    execFileSync(npx, ['--yes', 'supabase', ...args], { stdio: ['ignore', 'inherit', 'inherit'] })
+    return true
+  } catch {
+    console.error(`\n✖ ${label} failed (see the Supabase message above). No secrets were printed.`)
+    return false
+  }
+}
+
+// Secrets go through a private temp file (mode 600), never the command line
+const dir = mkdtempSync(join(tmpdir(), 'cfm-secrets-'))
+const envFile = join(dir, 'secrets.env')
+writeFileSync(envFile, `VAPID_PUBLIC_KEY=${vapidPublic}\nVAPID_PRIVATE_KEY=${vapidPrivate}\nVAPID_SUBJECT=mailto:${contact}\nCRON_SECRET=${cronSecret}\n`, { mode: 0o600 })
 
 console.log('→ Storing function secrets in Supabase (values are not printed)…')
-run(['secrets', 'set', `VAPID_PUBLIC_KEY=${vapidPublic}`, `VAPID_PRIVATE_KEY=${vapidPrivate}`, `VAPID_SUBJECT=mailto:${contact}`, `CRON_SECRET=${cronSecret}`, '--project-ref', ref])
+const stored = run('Storing secrets', ['secrets', 'set', '--env-file', envFile, `--remote=${ref}`, '--yes'])
+rmSync(dir, { recursive: true, force: true })
+if (!stored) process.exit(1)
 
 console.log('→ Deploying the send-reminders function…')
-run(['functions', 'deploy', 'send-reminders', '--no-verify-jwt', '--project-ref', ref])
+const deployed =
+  run('Deploy (server-side bundling)', ['functions', 'deploy', 'send-reminders', '--no-verify-jwt', '--use-api', `--remote=${ref}`, '--yes']) ||
+  run('Deploy', ['functions', 'deploy', 'send-reminders', '--no-verify-jwt', `--remote=${ref}`, '--yes'])
+if (!deployed) process.exit(1)
 
 const sql = readFileSync(new URL('../supabase/cron.sql', import.meta.url), 'utf8').replaceAll('<CRON_SECRET>', cronSecret).replaceAll('<PROJECT_REF>', ref)
 writeFileSync(new URL('../supabase/cron.local.sql', import.meta.url), sql)
