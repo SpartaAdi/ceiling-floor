@@ -133,7 +133,7 @@ export function BottomSheet({
 export function Toast({ message }: { message: string | null }) {
   if (!message) return null
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-24 z-[60] flex justify-center px-4 md:bottom-8 md:left-60" role="status" aria-live="polite">
+    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(1.5rem+env(safe-area-inset-bottom))] z-[60] flex justify-center px-4 md:bottom-8 md:left-60" role="status" aria-live="polite">
       <div className="animate-fade rounded-full bg-brand px-4 py-2 text-sm font-medium text-white shadow-lg dark:bg-accent dark:text-brand">
         {message}
       </div>
@@ -160,12 +160,12 @@ export function Kbd({ children, className }: { children: ReactNode; className?: 
 
 export function PageHeader({ title, sub, right }: { title: ReactNode; sub?: ReactNode; right?: ReactNode }) {
   return (
-    <header className="mb-5 flex flex-wrap items-end justify-between gap-3 pt-safe">
+    <header className="mb-4 flex flex-wrap items-end justify-between gap-3 md:mb-5">
       <div className="min-w-0">
-        <h1 className="text-2xl font-bold tracking-tight text-brand dark:text-white">{title}</h1>
+        <h1 className="text-xl font-bold tracking-tight text-brand md:text-2xl dark:text-white">{title}</h1>
         {sub && <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{sub}</p>}
       </div>
-      {right && <div className="flex flex-wrap items-center gap-2">{right}</div>}
+      {right && <div className="flex w-full flex-wrap items-center gap-2 md:w-auto">{right}</div>}
     </header>
   )
 }

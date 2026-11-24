@@ -76,6 +76,10 @@ export function normalize(input: unknown): AppData {
       facetTargets: isObj(settingsIn.facetTargets) ? (settingsIn.facetTargets as AppData['settings']['facetTargets']) : {},
     },
   }
+  if (isObj(input.meta)) {
+    const m = input.meta as Partial<NonNullable<AppData['meta']>>
+    out.meta = { sections: isObj(m.sections) ? m.sections : {}, tombstones: isObj(m.tombstones) ? (m.tombstones as Record<string, number>) : {} }
+  }
   if (input.version !== 2) migrateToV2(out)
   return out
 }

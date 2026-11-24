@@ -1,10 +1,11 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import type { AppData, Block, BlockStatus, DayMode, FacetId, Goal, Habit, Reflection, TemplateKey, Targets, Theme, WeekPriority, WeekReview } from '../types'
+import type { AppData, Block, BlockStatus, DayMode, FacetId, Goal, Habit, Reflection, Reminders, Targets, TemplateKey, Theme, WeekPriority, WeekReview } from '../types'
 import { createDefaultData, defaultHabits, defaultTemplates } from '../data/defaults'
 import { storage } from '../services/storageService'
 import { templateFor, toKey, toMin, weekStartOf } from '../lib/time'
 import { applyDayMode, ensureDay, ensureSnapshot, resetDayLog, setDayPlan } from '../lib/dayLogic'
 import { periodFor } from '../lib/goals'
+import { mergeData, stampChanges } from '../sync/merge'
 import { withDemoData, withoutDemoData } from '../lib/demo'
 
 type Draft = (d: AppData) => void
@@ -46,6 +47,9 @@ interface Store {
   loadDemo: () => void
   removeDemo: () => void
   clearAll: () => void
+  setReminders: (r: Reminders) => void
+  /** Merge data that came from another device (sync only) */
+  applyRemote: (d: AppData) => void
 }
 
 const Ctx = createContext<Store | null>(null)
@@ -69,13 +73,23 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     if (ready) void storage.save(data)
   }, [data, ready])
 
-  const mutate = useCallback((fn: Draft) => {
-    setData((prev) => {
-      const next = structuredClone(prev)
-      fn(next)
-      return next
-    })
+  /** Every local change goes through here so it is stamped for cross-device sync. */
+  const commit = useCallback((make: (prev: AppData) => AppData) => {
+    setData((prev) => stampChanges(prev, make(prev), Date.now()))
   }, [])
+
+  const mutate = useCallback(
+    (fn: Draft) =>
+      commit((prev) => {
+        const next = structuredClone(prev)
+        fn(next)
+        return next
+      }),
+    [commit],
+  )
+
+  /** Data arriving from the cloud: merged with whatever changed locally meanwhile, never re-stamped. */
+  const applyRemote = useCallback((incoming: AppData) => setData((prev) => mergeData(prev, incoming)), [])
 
   const notify = useCallback((msg: string) => {
     setToast(msg)
@@ -257,15 +271,18 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
           d.settings.theme = t
         }),
 
-      replaceAll: (next) => setData(next),
-      loadDemo: () => setData((prev) => withDemoData(prev, toKey(new Date()))),
-      removeDemo: () => setData((prev) => withoutDemoData(prev)),
-      clearAll: () => {
-        void storage.clear()
-        setData(createDefaultData())
-      },
+      setReminders: (r) =>
+        mutate((d) => {
+          d.settings.reminders = r
+        }),
+
+      replaceAll: (next) => commit((prev) => ({ ...next, meta: prev.meta })),
+      loadDemo: () => commit((prev) => withDemoData(prev, toKey(new Date()))),
+      removeDemo: () => commit((prev) => withoutDemoData(prev)),
+      clearAll: () => commit((prev) => ({ ...createDefaultData(), meta: prev.meta })),
+      applyRemote,
     }
-  }, [data, ready, toast, notify, previewBlocks, mutate])
+  }, [data, ready, toast, notify, previewBlocks, mutate, commit, applyRemote])
 
   return <Ctx.Provider value={store}>{children}</Ctx.Provider>
 }

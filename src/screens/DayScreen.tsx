@@ -110,7 +110,7 @@ export function DayScreen({
                 <ChevronRight size={18} />
               </button>
             </div>
-            <span className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-brand px-3 font-mono text-sm font-semibold tabular-nums text-white dark:bg-night-card">
+            <span className="hidden h-10 items-center gap-1.5 rounded-xl bg-brand px-3 font-mono md:inline-flex text-sm font-semibold tabular-nums text-white dark:bg-night-card">
               <Clock size={14} className="text-accent" />
               {fmtTime(now)}
             </span>
@@ -136,9 +136,10 @@ export function DayScreen({
 
       <WeekBar week={week} targets={data.settings.targets} selected={date} onSelect={setDate} />
 
-      <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-[minmax(360px,420px)_minmax(0,1fr)]">
-        {/* Left: decide + habits + reflect */}
-        <div className="flex flex-col gap-5">
+      <div className="mt-4 flex flex-col gap-4 md:mt-5 lg:grid lg:grid-cols-[minmax(360px,420px)_minmax(0,1fr)] lg:gap-5">
+        {/* Left: decide + habits + reflect (phone: interleaved via order-*) */}
+        <div className="contents lg:flex lg:flex-col lg:gap-5">
+          <div className="order-3 empty:hidden lg:order-none">
           {priorities.length > 0 && (
             <Card>
               <div className="mb-2.5 flex items-center gap-2">
@@ -162,6 +163,8 @@ export function DayScreen({
               </ul>
             </Card>
           )}
+          </div>
+          <div className="order-2 empty:hidden lg:order-none">
           <Card>
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-[15px] font-semibold text-brand dark:text-white">
@@ -174,7 +177,9 @@ export function DayScreen({
             <ModeTiles date={date} day={day} future={future} />
             {!future && <MissReason date={date} day={day} />}
           </Card>
+          </div>
 
+          <div className="order-6 empty:hidden lg:order-none">
           {future ? (
             <Card className="flex items-start gap-3">
               <CalendarClock size={18} className="mt-0.5 shrink-0 text-brand dark:text-accent" />
@@ -189,15 +194,25 @@ export function DayScreen({
               <CareStrip date={date} />
             </Card>
           )}
+          </div>
 
+          <div className="order-7 empty:hidden lg:order-none">
           <DayFacets day={day} blocks={blocks} future={future} />
+          </div>
+          <div className="order-8 empty:hidden lg:order-none">
           {!future && <ReflectionCard key={date} date={date} day={day} />}
+          </div>
         </div>
 
         {/* Right: live focus + timeline */}
-        <div className="flex min-w-0 flex-col gap-4">
+        <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-4">
+          <div className="order-1 empty:hidden lg:order-none">
           {isToday && <NowNext blocks={blocks} now={now} focus={yesterdayFocus} />}
+          </div>
+          <div className="order-4 empty:hidden lg:order-none">
           {isToday && <CatchUpCard key={date} date={date} day={day} blocks={blocks} now={now} />}
+          </div>
+          <div className="order-5 empty:hidden lg:order-none">
           <div>
             <div className="mb-2 flex items-baseline justify-between px-1">
               <h2 className="text-[15px] font-semibold text-brand dark:text-white">Timeline</h2>
@@ -215,6 +230,7 @@ export function DayScreen({
             <p className="mt-3 px-1 text-center text-[11px] text-slate-400">
               {future ? 'Ticks unlock on the day' : 'Tick ✓ for done and ✕ for missed • Works on any day mode'}
             </p>
+          </div>
           </div>
         </div>
       </div>

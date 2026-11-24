@@ -107,7 +107,7 @@ export function DashboardScreen({ now, onOpenDay }: { now: Date; onOpenDay: (d: 
         title="Dashboard"
         sub={`${fmtLong(m.range[0])} – ${fmtLong(m.range[1])} • ${m.bd.total} logged days`}
         right={
-          <div className="w-[420px] max-w-full">
+          <div className="w-full md:w-[420px]">
             <Segmented
               size="sm"
               value={tf}
@@ -687,7 +687,7 @@ function HabitMatrix({ today }: { today: string }) {
           </div>
         }
       />
-      <div className="grid grid-cols-[6.5rem_repeat(7,minmax(0,1fr))_3rem] items-center gap-y-1">
+      <div className="grid grid-cols-[5rem_repeat(7,minmax(0,1fr))_2.5rem] items-center gap-y-1 sm:grid-cols-[6.5rem_repeat(7,minmax(0,1fr))_3rem]">
         <span />
         {DOW_LETTER.map((l, i) => (
           <span key={i} className={cx('text-center text-[10px] font-semibold', hw.keys[i] === today ? 'text-brand dark:text-accent' : 'text-slate-400')}>

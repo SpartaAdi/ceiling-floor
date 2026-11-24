@@ -93,6 +93,8 @@ export interface WeekPlan {
 
 export interface WeekLog {
   weekStart: string // Monday YYYY-MM-DD
+  /** Set automatically on change; used to merge across devices */
+  updatedAt?: number
   /** weekly habit id -> date it was done */
   care: Record<string, string | undefined>
   review?: WeekReview
@@ -135,11 +137,27 @@ export interface Settings {
   theme: Theme
   /** Weekly hour targets per hours-facet; missing = auto from templates */
   facetTargets: Partial<Record<FacetId, number>>
+  /** Daily reminder times (synced) */
+  reminders?: Reminders
   demoLoaded?: boolean
+}
+
+/** Bookkeeping for cross-device sync (set automatically, never by hand). */
+export interface SyncMeta {
+  /** Last-change time per whole section */
+  sections: Partial<Record<'templates' | 'habits' | 'goals' | 'settings', number>>
+  /** Deletion times, e.g. "day:2026-11-18" or "week:2026-11-16" */
+  tombstones: Record<string, number>
+}
+
+export interface Reminders {
+  morning: string // HH:MM
+  evening: string // HH:MM
 }
 
 export interface AppData {
   version: 2
+  meta?: SyncMeta
   templates: Record<TemplateKey, Block[]>
   habits: Habit[]
   days: Record<string, DayLog>

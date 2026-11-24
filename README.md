@@ -1,6 +1,8 @@
 # Ceiling • Floor • Miss
 
-Desktop-first, local-first web app (installable PWA) for the Ceiling / Floor / Miss daily routine system, with life-facet analytics.
+Local-first web app (installable PWA) for the Ceiling / Floor / Miss daily routine system, with life-facet analytics. Desktop layout on the Mac, phone layout on iPhone (sized for iPhone 15 Pro), optional Mac ↔ iPhone sync and twice-daily reminders.
+
+**Sync + reminders setup:** see [SETUP-SYNC.md](SETUP-SYNC.md). Without it, everything works offline on each device.
 
 ```bash
 npm install
@@ -9,7 +11,7 @@ npm run build     # type-check + production build (PWA service worker in dist/)
 npm run preview   # serve dist/
 npm run icons     # regenerate PWA icons in public/
 npm test          # unit tests (Vitest) for every algorithm
-npm run test:e2e  # end-to-end browser tests (Playwright, uses installed Google Chrome)
+npm run test:e2e  # end-to-end tests (Playwright, installed Chrome): desktop, iPhone 15 Pro, and two-device sync against a fake Supabase
 npm run test:all  # unit tests → type-check + build → end-to-end
 ```
 
@@ -30,6 +32,9 @@ npm run test:all  # unit tests → type-check + build → end-to-end
 - `src/lib/insights.ts`: facet hours/scores, period-over-period change, weekly trends, rule-based insights
 - `src/lib/goals.ts` / `src/lib/review.ts`: goal measurement + pace, weekly review summary + due nudge
 - `src/lib/dayLogic.ts`: pure day-mode rules (auto-tick, catch-up preservation, reset)
+- `src/sync/`: merge rules (`merge.ts`), sync loop (`engine.ts`, `SyncProvider.tsx`), Supabase adapter (`supabase.ts`)
+- `supabase/`: database schema, reminder cron, and the `send-reminders` Edge Function
+- `public/push-sw.js`: notification handlers added to the service worker
 - `src/lib/__tests__/`, `e2e/`: unit and end-to-end tests
 - `src/screens/*`: Day view, Dashboard (lazy-loaded), Routine, Settings
 

@@ -76,7 +76,11 @@ export function ModeTiles({ date, day, future = false, showKeys = true }: { date
                 {active && future ? (
                   <span className="rounded-full bg-white px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider dark:bg-night">Planned</span>
                 ) : (
-                  showKeys && <Kbd className={active ? 'border-white/40 bg-white/15 text-white' : ''}>{t.key}</Kbd>
+                  showKeys && (
+                    <span className="hidden md:block">
+                      <Kbd className={active ? 'border-white/40 bg-white/15 text-white' : ''}>{t.key}</Kbd>
+                    </span>
+                  )
                 )}
               </div>
               <span>

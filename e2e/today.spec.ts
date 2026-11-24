@@ -4,7 +4,7 @@ import { budget, essentials, expect, modeTile, moveClock, openAt, test, timeline
 test('real-time focus, catch-up and night-care nudges', async ({ page, errors: _ }) => {
   await openAt(page, '2026-11-18T21:05:00')
   await expect(page.getByRole('heading', { name: 'Today', exact: true })).toBeVisible()
-  await expect(page.locator('header').getByText('9:05 PM')).toBeVisible()
+  await expect(page.getByRole('main').locator('header').getByText('9:05 PM')).toBeVisible()
 
   // NOW block + Now/Next card
   const nowRow = timeline(page).locator('li[data-now]')
@@ -271,7 +271,7 @@ test('clock refreshes every minute and moves NOW', async ({ page, errors: _ }) =
   await openAt(page, '2026-11-18T21:29:30')
   await expect(timeline(page).locator('li[data-now]')).toContainText('Night Care')
   await page.clock.runFor(61_000)
-  await expect(page.locator('header').getByText('9:30 PM')).toBeVisible()
+  await expect(page.getByRole('main').locator('header').getByText('9:30 PM')).toBeVisible()
   await expect(timeline(page).locator('li[data-now]')).toContainText('Reading')
 })
 

@@ -29,6 +29,8 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest}'],
+        // Daily reminder notifications (Web Push)
+        importScripts: ['push-sw.js'],
       },
     }),
   ],

@@ -36,7 +36,7 @@ export function CatchUpCard({ date, day, blocks, now }: { date: string; day?: Da
 
   return (
     <section aria-label="Earlier Today" className="animate-fade rounded-2xl border border-accent/60 bg-accent/10 p-3 dark:border-accent/30 dark:bg-accent/5">
-      <div className="mb-2 flex items-center justify-between gap-2">
+      <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
           <History size={16} className="text-brand dark:text-accent" />
           <div>

@@ -5,6 +5,7 @@ import { useStore } from '../store/AppStore'
 import { exportJSON, importJSON } from '../services/storageService'
 import { Card, CardTitle, PageHeader, Segmented, cx } from '../components/ui'
 import { HOUR_FACETS, autoFacetTargets, fmtH } from '../lib/facets'
+import { SyncCard } from '../components/SyncCard'
 
 function Stepper({
   label,
@@ -118,6 +119,7 @@ export function SettingsScreen() {
         </div>
 
         <div className="flex flex-col gap-5">
+        <SyncCard />
         <Card>
           <CardTitle title="Theme" sub="Light • Dark • System" />
           <Segmented<Theme>
@@ -219,7 +221,7 @@ export function SettingsScreen() {
               danger
               icon={<Trash2 size={18} />}
               label={armed === 'clear' ? 'Tap again to confirm' : 'Clear All Data'}
-              sub="Logs, templates & settings • Can't undo"
+              sub="Logs, templates & settings • Synced devices too • Can't undo"
               onClick={() =>
                 confirm('clear', () => {
                   clearAll()

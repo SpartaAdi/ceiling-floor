@@ -2,7 +2,8 @@ import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
 import { useStore } from './store/AppStore'
 import { useNow } from './hooks/useNow'
 import { Sidebar, type Tab } from './components/Sidebar'
-import { BottomNav } from './components/BottomNav'
+import { MobileBar } from './components/MobileBar'
+import { SyncStatus } from './components/SyncCard'
 import { ShortcutsDialog } from './components/DayPanels'
 import { Toast } from './components/ui'
 import { DayScreen } from './screens/DayScreen'
@@ -54,6 +55,7 @@ export default function App() {
   // null = default review week (this week on Sunday, else last week)
   const [reviewWs, setReviewWs] = useState<string | null>(null)
   const due = reviewDue(data, today)
+  const badges: Partial<Record<Tab, string>> = due ? { review: 'Due' } : {}
   useTheme()
 
   const go = useCallback((t: Tab) => {
@@ -112,23 +114,25 @@ export default function App() {
 
   return (
     <div className="flex min-h-dvh">
-      <Sidebar tab={tab} onChange={go} onShortcuts={() => setShortcuts(true)} badges={due ? { review: 'Due' } : {}} />
-      <main className="min-w-0 flex-1 px-4 pb-28 pt-6 md:px-8 md:pb-12 md:pt-8">
-        <div key={tab} className="mx-auto max-w-[1400px]">
-          {tab === 'today' && <DayScreen now={now} date={viewDate ?? today} setDate={setDate} reviewDue={due} onOpenReview={openReview} />}
-          {tab === 'dashboard' && (
-            <Suspense fallback={<div className="pt-24 text-center text-sm text-slate-400">Loading…</div>}>
-              <DashboardScreen now={now} onOpenDay={openDay} />
-            </Suspense>
-          )}
-          {tab === 'goals' && <GoalsScreen now={now} />}
-          {tab === 'review' && <ReviewScreen now={now} ws={reviewWs ?? defaultReviewWeek(today)} setWs={setReviewWs} />}
-          {tab === 'routine' && <RoutineScreen />}
-          {tab === 'settings' && <SettingsScreen />}
-        </div>
-      </main>
+      <Sidebar tab={tab} onChange={go} onShortcuts={() => setShortcuts(true)} badges={badges} status={<SyncStatus />} />
+      <div className="min-w-0 flex-1">
+        <MobileBar tab={tab} onChange={go} now={now} badges={badges} status={<SyncStatus />} />
+        <main className="px-4 pb-[calc(2.5rem+env(safe-area-inset-bottom))] pt-4 md:px-8 md:pb-12 md:pt-8">
+          <div key={tab} className="mx-auto max-w-[1400px]">
+            {tab === 'today' && <DayScreen now={now} date={viewDate ?? today} setDate={setDate} reviewDue={due} onOpenReview={openReview} />}
+            {tab === 'dashboard' && (
+              <Suspense fallback={<div className="pt-24 text-center text-sm text-slate-400">Loading…</div>}>
+                <DashboardScreen now={now} onOpenDay={openDay} />
+              </Suspense>
+            )}
+            {tab === 'goals' && <GoalsScreen now={now} />}
+            {tab === 'review' && <ReviewScreen now={now} ws={reviewWs ?? defaultReviewWeek(today)} setWs={setReviewWs} />}
+            {tab === 'routine' && <RoutineScreen />}
+            {tab === 'settings' && <SettingsScreen />}
+          </div>
+        </main>
+      </div>
       <Toast message={toast} />
-      <BottomNav tab={tab} onChange={go} />
       <ShortcutsDialog open={shortcuts} onClose={() => setShortcuts(false)} />
     </div>
   )

@@ -37,3 +37,26 @@ export async function loadDemo(page: Page) {
   await page.getByRole('button', { name: /Load 6-Week Demo Data/ }).click()
   await expect(page.getByRole('status')).toContainText('6 weeks of demo data loaded')
 }
+
+/** iPhone 15 Pro emulation (393×852 CSS px) for multi-device tests */
+export const IPHONE = {
+  viewport: { width: 393, height: 852 },
+  deviceScaleFactor: 3,
+  isMobile: true,
+  hasTouch: true,
+  userAgent:
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1',
+}
+
+/** Phone menu: expand, pick a page (menu collapses itself). */
+export async function phoneNav(page: Page, name: string) {
+  await page.getByRole('button', { name: 'Expand menu' }).click()
+  await page.getByRole('navigation', { name: 'Main' }).getByRole('button', { name: new RegExp(`^${name}`) }).click()
+  await expect(page.getByRole('navigation', { name: 'Main' })).toBeHidden()
+}
+
+/** Collect runtime errors for pages made outside the default fixture. */
+export function watchErrors(page: Page, into: string[]) {
+  page.on('pageerror', (e) => into.push(`pageerror: ${e.message}`))
+  page.on('console', (m) => m.type() === 'error' && into.push(`console: ${m.text()}`))
+}

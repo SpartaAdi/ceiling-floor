@@ -84,7 +84,7 @@ export function WeekBar({
                 d.future && !p && 'opacity-60',
               )}
             >
-              <span className={cx('text-[10px] font-bold uppercase', d.isToday ? 'text-brand dark:text-accent' : 'text-slate-400')}>
+              <span className={cx('text-[9px] font-bold uppercase sm:text-[10px]', d.isToday ? 'text-brand dark:text-accent' : 'text-slate-400')}>
                 {d.isToday ? 'Today' : DOW_SHORT[i]}
               </span>
               <span
@@ -100,7 +100,7 @@ export function WeekBar({
                 {fromKey(d.key).getDate()}
               </span>
               <span className={cx('text-[9px] font-semibold uppercase', m ? m.text : p ? cx(p.text, 'opacity-80') : 'text-transparent')}>
-                {m?.label ?? (p ? `Plan ${p.label}` : '—')}
+                {m?.label ?? (p ? <><span className="md:hidden">{p.label}</span><span className="hidden md:inline">Plan {p.label}</span></> : '—')}
               </span>
             </button>
           )

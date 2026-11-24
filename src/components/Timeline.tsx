@@ -57,7 +57,7 @@ function BlockRow({
     <li data-now={isNow || undefined} className="scroll-mt-24">
       <div
         className={cx(
-          'relative flex min-h-[68px] items-center gap-3 overflow-hidden rounded-2xl border bg-white px-4 py-2.5 transition-colors dark:bg-night-card',
+          'relative flex min-h-[68px] items-center gap-2 overflow-hidden rounded-2xl border bg-white px-3 py-2.5 transition-colors sm:gap-3 sm:px-4 dark:bg-night-card',
           isNow
             ? 'border-brand ring-4 ring-brand/10 dark:border-accent dark:ring-accent/15'
             : status === 'missed'
@@ -66,8 +66,8 @@ function BlockRow({
           isPast && !status && !isNow && 'opacity-70',
         )}
       >
-        <div className="w-[76px] shrink-0 font-mono">
-          <Time12 hhmm={block.start} className="block text-sm font-semibold text-brand dark:text-white" />
+        <div className="w-[62px] shrink-0 font-mono sm:w-[76px]">
+          <Time12 hhmm={block.start} className="block text-[13px] font-semibold text-brand sm:text-sm dark:text-white" />
           <Time12 hhmm={block.end} end className="block text-xs text-slate-400" />
         </div>
         <span className={cx('h-10 w-1 shrink-0 rounded-full', cat.dot)} aria-hidden />
