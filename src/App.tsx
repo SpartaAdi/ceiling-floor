@@ -1,8 +1,9 @@
-import { Suspense, lazy, useCallback, useEffect, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
 import { useStore } from './store/AppStore'
 import { useNow } from './hooks/useNow'
 import { Sidebar, type Tab } from './components/Sidebar'
-import { MobileBar } from './components/MobileBar'
+import { BottomTabs } from './components/BottomTabs'
+import { NavContext } from './nav'
 import { SyncStatus } from './components/SyncCard'
 import { ShortcutsDialog } from './components/DayPanels'
 import { Toast } from './components/ui'
@@ -110,18 +111,22 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey)
   }, [go])
 
+  const nav = useMemo(() => ({ go, openDay }), [go, openDay])
+
   if (!ready) return null
 
   return (
+    <NavContext.Provider value={nav}>
     <div className="flex min-h-dvh">
       <Sidebar tab={tab} onChange={go} onShortcuts={() => setShortcuts(true)} badges={badges} status={<SyncStatus />} />
       <div className="min-w-0 flex-1">
-        <MobileBar tab={tab} onChange={go} now={now} badges={badges} status={<SyncStatus />} />
-        <main className="px-4 pb-[calc(2.5rem+env(safe-area-inset-bottom))] pt-4 md:px-8 md:pb-12 md:pt-8">
-          <div key={tab} className="mx-auto max-w-[1400px]">
+        {/* Phone status-bar band (keeps iOS status text readable) */}
+        <div aria-hidden className="fixed inset-x-0 top-0 z-50 h-[env(safe-area-inset-top)] bg-brand md:hidden" />
+        <main className="px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-[calc(env(safe-area-inset-top)+1rem)] md:px-8 md:pb-12 md:pt-8">
+          <div key={tab} className="animate-page mx-auto max-w-[1400px]">
             {tab === 'today' && <DayScreen now={now} date={viewDate ?? today} setDate={setDate} reviewDue={due} onOpenReview={openReview} />}
             {tab === 'dashboard' && (
-              <Suspense fallback={<div className="pt-24 text-center text-sm text-slate-400">Loading…</div>}>
+              <Suspense fallback={<div className="pt-24 text-center text-sm text-slate-600 dark:text-slate-400">Loading…</div>}>
                 <DashboardScreen now={now} onOpenDay={openDay} />
               </Suspense>
             )}
@@ -132,8 +137,10 @@ export default function App() {
           </div>
         </main>
       </div>
+      <BottomTabs tab={tab} onChange={go} badges={badges} status={<SyncStatus dark={false} />} />
       <Toast message={toast} />
       <ShortcutsDialog open={shortcuts} onClose={() => setShortcuts(false)} />
     </div>
+    </NavContext.Provider>
   )
 }

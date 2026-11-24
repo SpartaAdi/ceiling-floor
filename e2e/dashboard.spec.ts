@@ -19,13 +19,13 @@ test('dashboard with demo data: KPIs, facets, insights, charts, drill-down', asy
 
   // Timeframes change the logged-day count
   const sub = main.locator('header p').first()
-  await expect(sub).toContainText('5 logged days')
+  await expect(sub).toContainText('5 logged')
   await main.getByRole('radio', { name: '30 Days' }).click()
-  await expect(sub).toContainText('29 logged days')
+  await expect(sub).toContainText('29 logged')
   await main.getByRole('radio', { name: 'All Time' }).click()
-  await expect(sub).toContainText('42 logged days')
+  await expect(sub).toContainText('42 logged')
   await main.getByRole('radio', { name: 'This Month' }).click()
-  await expect(sub).toContainText('20 logged days')
+  await expect(sub).toContainText('20 logged')
 
   // Block report expands
   await main.getByRole('button', { name: /^All \d+ blocks/ }).click()
@@ -46,6 +46,7 @@ test('dashboard with demo data: KPIs, facets, insights, charts, drill-down', asy
 test('dashboard empty state is calm', async ({ page, errors: _ }) => {
   await openAt(page, '2026-11-18T12:00:00')
   await nav(page, 'Dashboard').click()
-  await expect(page.getByText('Log a few more days')).toBeVisible()
-  await expect(page.getByText('No Ceiling or Floor days yet')).toBeVisible()
+  await expect(page.getByText('Insights unlock after 3 logged days')).toBeVisible()
+  await expect(page.getByText('No logged days yet')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Log today' }).first()).toBeVisible()
 })

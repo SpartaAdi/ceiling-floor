@@ -139,6 +139,8 @@ export interface Settings {
   facetTargets: Partial<Record<FacetId, number>>
   /** Daily reminder times (synced) */
   reminders?: Reminders
+  /** First-run checklist dismissed */
+  onboardingDone?: boolean
   demoLoaded?: boolean
 }
 

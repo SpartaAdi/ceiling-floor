@@ -11,6 +11,9 @@ test('routine editor: add, edit, delete blocks; snapshots protect history', asyn
   await nav(page, 'Routine').click()
   await page.getByRole('button', { name: 'Add block' }).click()
   const dlg = page.getByRole('dialog', { name: 'New block' })
+  // Smart default: a full day falls back to a 1-hour 7–8 AM slot
+  await expect(dlg.getByLabel('Start')).toHaveValue('07:00')
+  await expect(dlg.getByLabel('End')).toHaveValue('08:00')
   await dlg.getByLabel('Start').fill('23:00')
   await dlg.getByLabel('End').fill('23:30')
   await dlg.getByLabel(/^Title/).fill('Stretch Break')
@@ -49,7 +52,7 @@ test('habits editor: add habit linked to an area; appears on Today', async ({ pa
   await page.getByRole('button', { name: 'Add Daily Essentials habit' }).click()
   const dlg = page.getByRole('dialog', { name: 'New habit' })
   await dlg.getByLabel(/^Label/).fill('Water')
-  await dlg.getByLabel(/Counts toward/).selectOption({ label: 'Nutrition' })
+  await dlg.getByRole('radiogroup', { name: 'Counts toward' }).getByRole('radio', { name: 'Nutrition' }).click()
   await dlg.getByRole('button', { name: 'Save habit' }).click()
   await expect(page.getByText('Water')).toBeVisible()
   await nav(page, 'Today').click()

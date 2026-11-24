@@ -48,6 +48,7 @@ interface Store {
   removeDemo: () => void
   clearAll: () => void
   setReminders: (r: Reminders) => void
+  setOnboardingDone: (done: boolean) => void
   /** Merge data that came from another device (sync only) */
   applyRemote: (d: AppData) => void
 }
@@ -269,6 +270,11 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       setTheme: (t) =>
         mutate((d) => {
           d.settings.theme = t
+        }),
+
+      setOnboardingDone: (done) =>
+        mutate((d) => {
+          d.settings.onboardingDone = done || undefined
         }),
 
       setReminders: (r) =>

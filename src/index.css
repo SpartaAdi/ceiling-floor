@@ -14,6 +14,15 @@
   --color-ceiling: #10B981;
   --color-floor: #F59E0B;
   --color-miss: #F43F5E;
+  /* Readable shades of the semantic colours (WCAG AA ≥ 4.5:1).
+     -ink: text & icons on cards (lighter in dark mode)
+     -solid: filled surfaces carrying white text */
+  --color-ceiling-ink: #047857;
+  --color-floor-ink: #92400E;
+  --color-miss-ink: #BE123C;
+  --color-ceiling-solid: #047857;
+  --color-floor-solid: #B45309;
+  --color-miss-solid: #E11D48;
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", Roboto, sans-serif;
   --font-mono: "SF Mono", ui-monospace, Menlo, monospace;
 }
@@ -21,6 +30,11 @@
 @layer base {
   :root { --chart-surface: #FFFFFF; --chart-grid: #E2E8F0; --chart-ink: #64748B; }
   html.dark { --chart-surface: #0E2440; --chart-grid: #1A3A5C; --chart-ink: #94A3B8; }
+  html.dark {
+    --color-ceiling-ink: #34D399;
+    --color-floor-ink: #FBBF24;
+    --color-miss-ink: #FB7185;
+  }
   html {
     -webkit-tap-highlight-color: transparent;
     -webkit-text-size-adjust: 100%;
@@ -36,6 +50,26 @@
   button {
     cursor: pointer;
     touch-action: manipulation;
+  }
+  /* Toolkit 1.1: every interactive element offers at least a 44×44 px hit area */
+  button,
+  [role='button'],
+  [role='radio'],
+  [role='tab'],
+  a[href],
+  select,
+  input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='hidden']) {
+    min-height: 44px;
+  }
+  button,
+  [role='button'],
+  [role='radio'],
+  [role='tab'] {
+    min-width: 44px;
+  }
+  /* Toolkit 5: instant press feedback on every tap (utilities can override) */
+  button:not(:disabled):active {
+    scale: 0.97;
   }
   input, select, textarea {
     font-size: 16px; /* prevent iOS zoom on focus */
@@ -74,11 +108,19 @@
 @utility animate-fade {
   animation: fade-in 0.2s ease-out;
 }
+/* Opacity only: a transform would re-anchor fixed children (FAB, sheets) mid-animation */
+@keyframes page-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@utility animate-page {
+  animation: page-in 0.2s ease-out;
+}
 @utility animate-pop {
   animation: pop 0.22s ease-out;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-sheet, .animate-fade, .animate-pop { animation: none; }
+  .animate-sheet, .animate-fade, .animate-pop, .animate-page { animation: none; }
   html { scroll-behavior: auto !important; }
 }

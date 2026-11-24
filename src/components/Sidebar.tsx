@@ -80,7 +80,7 @@ export function Sidebar({
         {!collapsed && (
           <div className="min-w-0 flex-1 leading-tight">
             <p className="text-[15px] font-bold">Ceiling • Floor</p>
-            <p className="text-[11px] text-white/50">Daily system</p>
+            <p className="text-[11px] text-white/60">Daily system</p>
           </div>
         )}
         <button
@@ -115,7 +115,7 @@ export function Sidebar({
               {!collapsed && (
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-semibold">{label}</span>
-                  <span className="block truncate text-[11px] text-white/40">{sub}</span>
+                  <span className="block truncate text-[11px] text-white/60">{sub}</span>
                 </span>
               )}
               {badges[id] ? (
@@ -125,7 +125,7 @@ export function Sidebar({
                   <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-bold text-brand">{badges[id]}</span>
                 )
               ) : (
-                !collapsed && <span className="font-mono text-[10px] text-white/30 opacity-0 transition-opacity group-hover:opacity-100">{key}</span>
+                !collapsed && <span className="font-mono text-[10px] text-white/50 opacity-0 transition-opacity group-hover:opacity-100">{key}</span>
               )}
             </button>
           )
@@ -139,7 +139,7 @@ export function Sidebar({
           aria-label="Shortcuts"
           title="Shortcuts (?)"
           className={cx(
-            'flex min-h-10 items-center gap-2 rounded-xl text-xs font-medium text-white/60 hover:bg-white/5 hover:text-white',
+            'flex min-h-11 items-center gap-2 rounded-xl text-xs font-medium text-white/60 hover:bg-white/5 hover:text-white',
             collapsed ? 'w-10 justify-center' : 'px-2',
           )}
         >
@@ -152,7 +152,7 @@ export function Sidebar({
           )}
         </button>
         <ThemeSwitch theme={data.settings.theme} setTheme={setTheme} vertical={collapsed} />
-        {!collapsed && <p className="px-1 text-[10px] text-white/30">Local-first • Works offline</p>}
+        {!collapsed && <p className="px-1 text-[10px] text-white/50">Local-first • Works offline</p>}
       </div>
     </aside>
   )
@@ -170,7 +170,7 @@ export function ThemeSwitch({ theme, setTheme, vertical = false }: { theme: Them
           title={label}
           onClick={() => setTheme(value)}
           className={cx(
-            'flex h-9 items-center justify-center rounded-lg transition-colors',
+            'flex h-9 items-center justify-center rounded-xl transition-colors',
             vertical ? 'w-10' : 'flex-1',
             theme === value ? 'bg-white/15 text-accent' : 'text-white/50 hover:text-white',
           )}

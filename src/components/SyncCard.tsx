@@ -41,7 +41,7 @@ export function SyncStatus({ dark = true }: { dark?: boolean }) {
   if (!configured) return null
   const dot = state === 'synced' ? 'bg-ceiling' : state === 'syncing' ? 'bg-accent animate-pulse' : state === 'error' ? 'bg-miss' : 'bg-slate-400'
   return (
-    <span className={cx('inline-flex items-center gap-1.5 text-[11px] font-medium', dark ? 'text-white/60' : 'text-slate-500')} role="status">
+    <span className={cx('inline-flex items-center gap-1.5 text-[11px] font-medium', dark ? 'text-white/60' : 'text-slate-600')} role="status">
       <span className={cx('size-2 rounded-full', dot)} />
       {syncLabel(state, lastSyncedAt)}
     </span>
@@ -58,7 +58,15 @@ export function SyncCard() {
       <Card>
         <CardTitle title="Sync & Reminders" sub="This device only" right={<CloudOff size={18} className="text-slate-300" />} />
         <p className="text-sm text-slate-600 dark:text-slate-300">Sync isn't set up yet • Data stays on this device</p>
-        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Follow SETUP-SYNC.md in the project to link your Mac and iPhone and turn on reminders.</p>
+        <p className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-400">Link your Mac and iPhone and turn on the 9:30 AM / 9 PM reminders in about 20 minutes.</p>
+        <a
+          href="https://github.com/SpartaAdi/ceiling-floor/blob/main/SETUP-SYNC.md"
+          target="_blank"
+          rel="noreferrer"
+          className="mt-3 inline-flex h-11 items-center gap-1.5 rounded-xl border-2 border-slate-200 px-4 text-sm font-semibold text-brand hover:border-brand dark:border-night-line dark:text-white dark:hover:border-accent"
+        >
+          Open setup guide
+        </a>
       </Card>
     )
   }
@@ -67,7 +75,7 @@ export function SyncCard() {
       <CardTitle
         title="Sync & Reminders"
         sub={syncLabel(sync.state, sync.lastSyncedAt)}
-        right={<Cloud size={18} className={sync.state === 'synced' ? 'text-ceiling' : 'text-slate-300'} />}
+        right={<Cloud size={18} className={sync.state === 'synced' ? 'text-ceiling-ink' : 'text-slate-300'} />}
       />
       {sync.user ? <SignedIn /> : <SignInForm />}
     </Card>
@@ -106,7 +114,7 @@ function SignInForm() {
         if (valid) void run('in')
       }}
     >
-      <p className="text-xs text-slate-500 dark:text-slate-400">Sign in with the same account on your Mac and iPhone</p>
+      <p className="text-xs text-slate-600 dark:text-slate-400">Sign in with the same account on your Mac and iPhone</p>
       <input type="email" autoComplete="email" inputMode="email" placeholder="Email" aria-label="Email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputCls} />
       <input
         type="password"
@@ -117,7 +125,7 @@ function SignInForm() {
         onChange={(e) => setPassword(e.target.value)}
         className={inputCls}
       />
-      {msg && <p className={cx('text-xs font-medium', msg.tone === 'ok' ? 'text-ceiling' : 'text-miss')}>{msg.text}</p>}
+      {msg && <p className={cx('text-xs font-medium', msg.tone === 'ok' ? 'text-ceiling-ink' : 'text-miss-ink')}>{msg.text}</p>}
       <div className="flex gap-2">
         <button disabled={!valid || busy} className="h-11 flex-1 rounded-xl bg-brand text-sm font-bold text-white disabled:opacity-40 dark:bg-accent dark:text-brand">
           {busy ? 'Working…' : 'Sign in'}
@@ -146,15 +154,15 @@ function SignedIn() {
         <button
           onClick={() => void syncNow()}
           disabled={state === 'syncing'}
-          className="inline-flex h-9 items-center gap-1.5 rounded-lg border-2 border-slate-200 px-3 text-xs font-semibold text-slate-600 disabled:opacity-50 dark:border-night-line dark:text-slate-300"
+          className="inline-flex h-9 items-center gap-1.5 rounded-xl border-2 border-slate-200 px-3 text-xs font-semibold text-slate-600 disabled:opacity-50 dark:border-night-line dark:text-slate-300"
         >
           <RefreshCw size={13} className={state === 'syncing' ? 'animate-spin' : ''} /> Sync now
         </button>
-        <button onClick={() => void signOut()} className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2 text-xs font-semibold text-slate-400 hover:text-miss">
+        <button onClick={() => void signOut()} className="inline-flex h-9 items-center gap-1.5 rounded-xl px-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-miss-ink">
           <LogOut size={13} /> Sign out
         </button>
       </div>
-      {error && <p className="text-xs font-medium text-miss">{error}</p>}
+      {error && <p className="text-xs font-medium text-miss-ink">{error}</p>}
       <RemindersSection />
     </div>
   )
@@ -174,7 +182,7 @@ function RemindersSection() {
   }, [])
 
   if (!pushConfigured()) {
-    return <p className="rounded-xl bg-slate-50 p-3 text-xs text-slate-500 dark:bg-night dark:text-slate-400">Reminders need the VAPID key step in SETUP-SYNC.md</p>
+    return <p className="rounded-xl bg-slate-50 p-3 text-xs text-slate-600 dark:bg-night dark:text-slate-400">Reminders need the VAPID key step in SETUP-SYNC.md</p>
   }
 
   const act = async (fn: () => Promise<void>) => {
@@ -218,17 +226,17 @@ function RemindersSection() {
   return (
     <div className="rounded-xl border border-slate-200 p-3 dark:border-night-line">
       <div className="mb-2 flex items-center gap-2">
-        <Bell size={15} className="text-accent" />
+        <Bell size={15} className="text-amber-600 dark:text-accent" />
         <p className="text-sm font-semibold text-brand dark:text-white">Daily reminders</p>
-        <span className="text-xs text-slate-400">Twice a day • Not per task</span>
+        <span className="text-xs text-slate-600 dark:text-slate-400">Twice a day • Not per task</span>
       </div>
       <div className="mb-3 grid grid-cols-2 gap-2">
         <label className="block">
-          <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate-400">Morning • {fmt12(reminders.morning)}</span>
+          <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Morning • {fmt12(reminders.morning)}</span>
           <input type="time" aria-label="Morning reminder" value={reminders.morning} onChange={(e) => changeTime('morning', e.target.value)} className={inputCls} />
         </label>
         <label className="block">
-          <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate-400">Evening • {fmt12(reminders.evening)}</span>
+          <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Evening • {fmt12(reminders.evening)}</span>
           <input type="time" aria-label="Evening reminder" value={reminders.evening} onChange={(e) => changeTime('evening', e.target.value)} className={inputCls} />
         </label>
       </div>
@@ -239,18 +247,18 @@ function RemindersSection() {
           On iPhone, tap Share → Add to Home Screen, then open the app from your Home Screen to turn reminders on.
         </p>
       ) : blocker === 'unsupported' ? (
-        <p className="text-xs text-slate-500 dark:text-slate-400">This browser can't show reminders • Try Safari (iPhone Home Screen) or Chrome (Mac)</p>
+        <p className="text-xs text-slate-600 dark:text-slate-400">This browser can't show reminders • Try Safari (iPhone Home Screen) or Chrome (Mac)</p>
       ) : blocker === 'denied' ? (
-        <p className="text-xs text-miss">Notifications are blocked for this app • Allow them in system settings</p>
+        <p className="text-xs text-miss-ink">Notifications are blocked for this app • Allow them in system settings</p>
       ) : onHere ? (
         <div className="flex flex-wrap gap-2">
-          <span className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-ceiling/10 px-3 text-xs font-bold text-ceiling">
+          <span className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-ceiling/10 px-3 text-xs font-bold text-ceiling-ink">
             <Bell size={13} /> On for this device
           </span>
-          <button onClick={() => void test()} disabled={busy} className="inline-flex h-9 items-center gap-1.5 rounded-lg border-2 border-slate-200 px-3 text-xs font-semibold text-slate-600 disabled:opacity-50 dark:border-night-line dark:text-slate-300">
+          <button onClick={() => void test()} disabled={busy} className="inline-flex h-9 items-center gap-1.5 rounded-xl border-2 border-slate-200 px-3 text-xs font-semibold text-slate-600 disabled:opacity-50 dark:border-night-line dark:text-slate-300">
             <Send size={13} /> Send test
           </button>
-          <button onClick={() => void turnOff()} disabled={busy} className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2 text-xs font-semibold text-slate-400 hover:text-miss">
+          <button onClick={() => void turnOff()} disabled={busy} className="inline-flex h-9 items-center gap-1.5 rounded-xl px-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-miss-ink">
             <BellOff size={13} /> Turn off
           </button>
         </div>

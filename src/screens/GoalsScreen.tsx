@@ -47,7 +47,7 @@ export function GoalsScreen({ now }: { now: Date }) {
         right={
           <button
             onClick={() => setEditing({ id: uid(), facet: 'deep', title: '', kind: 'hours', target: 10, period: 'week', createdAt: today })}
-            className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-brand px-4 text-sm font-semibold text-white hover:bg-brand-2 dark:bg-accent dark:text-brand"
+            className="hidden h-11 items-center gap-1.5 rounded-xl bg-brand px-4 text-sm font-semibold text-white hover:bg-brand-2 md:inline-flex dark:bg-accent dark:text-brand"
           >
             <Plus size={16} /> New goal
           </button>
@@ -57,9 +57,9 @@ export function GoalsScreen({ now }: { now: Date }) {
       {active.length > 0 && (
         <div className="mb-5 grid grid-cols-2 gap-4 md:grid-cols-4">
           <Stat label="Active" value={active.length} />
-          <Stat label="Done" value={count(['done'])} tone="text-ceiling" />
-          <Stat label="On track" value={count(['on-track'])} tone="text-ceiling" />
-          <Stat label="Need attention" value={count(['behind', 'off-track'])} tone="text-miss" />
+          <Stat label="Done" value={count(['done'])} tone="text-ceiling-ink" />
+          <Stat label="On track" value={count(['on-track'])} tone="text-ceiling-ink" />
+          <Stat label="Need attention" value={count(['behind', 'off-track'])} tone="text-miss-ink" />
         </div>
       )}
 
@@ -75,7 +75,7 @@ export function GoalsScreen({ now }: { now: Date }) {
                 'h-9 shrink-0 rounded-full px-3.5 text-[13px] font-semibold transition-colors',
                 filter === f.id
                   ? 'bg-brand text-white dark:bg-accent dark:text-brand'
-                  : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-brand dark:bg-night-card dark:text-slate-300 dark:ring-night-line',
+                  : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:text-brand dark:bg-night-card dark:text-slate-300 dark:ring-night-line',
               )}
             >
               {f.label}
@@ -88,7 +88,7 @@ export function GoalsScreen({ now }: { now: Date }) {
         <Card className="py-10 text-center">
           <Target size={32} className="mx-auto text-slate-300" />
           <h2 className="mt-3 text-lg font-bold text-brand dark:text-white">No goals yet</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Pick a starter • Edit it anytime</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400">Pick a starter • Edit it anytime</p>
           <div className="mx-auto mt-5 grid max-w-2xl grid-cols-1 gap-2 sm:grid-cols-2">
             {TEMPLATES.map((t) => {
               const f = FACET_BY_ID[t.facet]
@@ -101,11 +101,11 @@ export function GoalsScreen({ now }: { now: Date }) {
                   <f.Icon size={18} style={{ color: f.color }} />
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm font-semibold text-brand dark:text-white">{t.title}</span>
-                    <span className="block text-[11px] text-slate-500 dark:text-slate-400">
+                    <span className="block text-[11px] text-slate-600 dark:text-slate-400">
                       {f.label} • {GOAL_PERIOD_LABEL[t.period]}
                     </span>
                   </span>
-                  <Plus size={16} className="text-slate-400" />
+                  <Plus size={16} className="text-slate-600 dark:text-slate-400" />
                 </button>
               )
             })}
@@ -123,7 +123,7 @@ export function GoalsScreen({ now }: { now: Date }) {
         <div className="mt-6">
           <button
             onClick={() => setShowArchived((v) => !v)}
-            className="inline-flex h-9 items-center gap-1 text-sm font-semibold text-slate-500 hover:text-brand dark:hover:text-white"
+            className="inline-flex h-9 items-center gap-1 text-sm font-semibold text-slate-600 hover:text-brand dark:hover:text-white"
           >
             Archived • {archived.length}
             <ChevronDown size={14} className={cx('transition-transform', showArchived && 'rotate-180')} />
@@ -137,6 +137,14 @@ export function GoalsScreen({ now }: { now: Date }) {
           )}
         </div>
       )}
+
+      {/* Phone: primary action in the thumb zone, above the tab bar */}
+      <button
+        onClick={() => setEditing({ id: uid(), facet: 'deep', title: '', kind: 'hours', target: 10, period: 'week', createdAt: today })}
+        className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 z-30 inline-flex h-14 items-center gap-2 rounded-full bg-brand px-5 text-sm font-bold text-white shadow-lg shadow-brand/30 md:hidden dark:bg-accent dark:text-brand"
+      >
+        <Plus size={20} /> New goal
+      </button>
 
       <BottomSheet
         open={!!editing}
@@ -153,7 +161,7 @@ export function GoalsScreen({ now }: { now: Date }) {
 function Stat({ label, value, tone }: { label: string; value: number; tone?: string }) {
   return (
     <Card className="py-3">
-      <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">{label}</p>
+      <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">{label}</p>
       <p className={cx('text-2xl font-bold tabular-nums', tone ?? 'text-brand dark:text-white')}>{value}</p>
     </Card>
   )
@@ -185,7 +193,7 @@ function GoalCard({ goal, today, onEdit }: { goal: Goal; today: string; onEdit: 
         </span>
         <div className="min-w-0 flex-1">
           <h3 className="truncate text-[15px] font-semibold text-brand dark:text-white">{goal.title}</h3>
-          <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">
+          <p className="truncate text-[11px] text-slate-600 dark:text-slate-400">
             {f.label} • {GOAL_PERIOD_LABEL[goal.period]}
             {goal.period === 'custom' && ` • by ${fmtLong(ev.range.to)}`} • {GOAL_KIND_META[goal.kind].label}
             {habit && ` • ${habit.label}`}
@@ -197,22 +205,22 @@ function GoalCard({ goal, today, onEdit }: { goal: Goal; today: string; onEdit: 
       <div className="flex items-end justify-between gap-3">
         <p>
           <span className="text-3xl font-bold tabular-nums text-brand dark:text-white">{unit(ev.value)}</span>
-          <span className="text-sm text-slate-400"> / {unit(goal.target)}</span>
+          <span className="text-sm text-slate-600 dark:text-slate-400"> / {unit(goal.target)}</span>
         </p>
-        <span className="text-sm font-bold tabular-nums text-slate-500 dark:text-slate-400">{ev.pct}%</span>
+        <span className="text-sm font-bold tabular-nums text-slate-600 dark:text-slate-400">{ev.pct}%</span>
       </div>
       <GoalBar ev={ev} color={f.color} />
-      <p className="text-xs text-slate-500 dark:text-slate-400">{footnote}</p>
+      <p className="text-xs text-slate-600 dark:text-slate-400">{footnote}</p>
 
       {hist.length > 0 && (
-        <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+        <div className="flex items-center gap-2 text-[11px] text-slate-600 dark:text-slate-400">
           <span>Past {goal.period === 'week' ? 'weeks' : 'months'}</span>
           <span className="flex gap-1">
             {hist.map((h) => (
               <span
                 key={h.key}
                 title={`${fmtLong(h.key)} • ${unit(h.value)}`}
-                className={cx('flex size-5 items-center justify-center rounded-md', h.hit ? 'bg-ceiling text-white' : 'bg-miss/15 text-miss')}
+                className={cx('flex size-5 items-center justify-center rounded-lg', h.hit ? 'bg-ceiling-solid text-white' : 'bg-miss/15 text-miss-ink')}
               >
                 {h.hit ? <Check size={12} strokeWidth={3} /> : <X size={12} strokeWidth={3} />}
               </span>
@@ -283,12 +291,12 @@ function IconBtn({
       onClick={onClick}
       disabled={disabled}
       className={cx(
-        'flex size-9 items-center justify-center rounded-lg transition-colors disabled:opacity-30',
+        'flex size-9 items-center justify-center rounded-xl transition-colors disabled:opacity-30',
         danger
-          ? 'bg-miss text-white'
+          ? 'bg-miss-solid text-white'
           : strong
             ? 'bg-brand text-white hover:bg-brand-2 dark:bg-accent dark:text-brand'
-            : 'text-slate-500 hover:bg-slate-100 hover:text-brand dark:hover:bg-night dark:hover:text-white',
+            : 'text-slate-600 hover:bg-slate-100 hover:text-brand dark:hover:bg-night dark:hover:text-white',
       )}
     >
       {children}
@@ -302,7 +310,7 @@ const inputCls =
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate-400">{label}</span>
+      <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">{label}</span>
       {children}
     </label>
   )
@@ -364,7 +372,7 @@ function GoalForm({ initial, onDone }: { initial: Goal; onDone: () => void }) {
       }}
     >
       <div>
-        <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate-400">Area</span>
+        <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Area</span>
         <div className="flex flex-wrap gap-1.5">
           {FACETS.map((f) => (
             <button
@@ -374,9 +382,9 @@ function GoalForm({ initial, onDone }: { initial: Goal; onDone: () => void }) {
               aria-pressed={g.facet === f.id}
               className={cx(
                 'inline-flex h-9 items-center gap-1.5 rounded-full border-2 px-3 text-xs font-semibold',
-                g.facet === f.id ? 'text-white' : 'border-slate-200 text-slate-600 dark:border-night-line dark:text-slate-300',
+                g.facet === f.id ? 'text-brand dark:text-white' : 'border-slate-200 text-slate-600 dark:border-night-line dark:text-slate-300',
               )}
-              style={g.facet === f.id ? { background: f.color, borderColor: f.color } : undefined}
+              style={g.facet === f.id ? { background: `${f.color}1F`, borderColor: f.color } : undefined}
             >
               <f.Icon size={13} /> {f.label}
             </button>
@@ -389,25 +397,44 @@ function GoalForm({ initial, onDone }: { initial: Goal; onDone: () => void }) {
       </Field>
 
       <div>
-        <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate-400">How it's measured</span>
+        <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">How it's measured</span>
         <Choice<GoalKind>
           value={g.kind}
-          onChange={(v) => set('kind', v)}
+          onChange={(v) => {
+            set('kind', v)
+            // Smart default: pre-pick the habit that feeds this goal's area
+            if (v === 'habit' && !g.habitId) set('habitId', (dailyHabits.find((h) => h.facet === g.facet) ?? dailyHabits[0])?.id)
+          }}
           options={(Object.keys(GOAL_KIND_META) as GoalKind[]).map((k) => ({ value: k, label: GOAL_KIND_META[k].label, sub: GOAL_KIND_META[k].sub }))}
         />
       </div>
 
       {g.kind === 'habit' && (
-        <Field label="Habit">
-          <select aria-label="Habit" value={g.habitId ?? ''} onChange={(e) => set('habitId', e.target.value || undefined)} className={inputCls}>
-            <option value="">Pick a habit…</option>
-            {dailyHabits.map((h) => (
-              <option key={h.id} value={h.id}>
-                {h.label}
-              </option>
-            ))}
-          </select>
-        </Field>
+        <div>
+          <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Habit</span>
+          <div role="radiogroup" aria-label="Habit" className="flex flex-wrap gap-1.5">
+            {dailyHabits.map((h) => {
+              const on = g.habitId === h.id
+              return (
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  key={h.id}
+                  onClick={() => set('habitId', h.id)}
+                  className={cx(
+                    'inline-flex h-11 items-center gap-1.5 rounded-full border-2 px-3.5 text-sm font-semibold transition-colors',
+                    on
+                      ? 'border-brand bg-brand text-white dark:border-accent dark:bg-accent dark:text-brand'
+                      : 'border-slate-200 text-slate-600 hover:border-slate-400 dark:border-night-line dark:text-slate-300',
+                  )}
+                >
+                  {h.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
       )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-[160px_1fr]">
@@ -422,7 +449,7 @@ function GoalForm({ initial, onDone }: { initial: Goal; onDone: () => void }) {
           />
         </Field>
         <div>
-          <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate-400">Period</span>
+          <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Period</span>
           <Choice<GoalPeriod>
             value={g.period}
             onChange={(v) => set('period', v)}
@@ -442,7 +469,7 @@ function GoalForm({ initial, onDone }: { initial: Goal; onDone: () => void }) {
         </div>
       )}
 
-      {errors.length > 0 && g.title && <p className="text-xs font-medium text-miss">{errors.join(' • ')}</p>}
+      {errors.length > 0 && g.title && <p className="text-xs font-medium text-miss-ink">{errors.join(' • ')}</p>}
 
       <button
         disabled={errors.length > 0}

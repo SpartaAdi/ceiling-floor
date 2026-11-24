@@ -43,8 +43,11 @@ test('goals: starter, auto-tracking, manual count, edit, archive, delete', async
   const d2 = page.getByRole('dialog', { name: 'New goal' })
   await d2.getByPlaceholder('Deep work 20h').fill('Eat right 6 days')
   await d2.getByRole('button', { name: /^Habit days/ }).click()
-  await expect(d2.getByRole('button', { name: 'Save goal' })).toBeDisabled()
-  await d2.getByLabel('Habit', { exact: true }).selectOption({ label: 'Eat Right' })
+  // Smart default: a habit is pre-picked, so the form is never stuck
+  const habitPick = d2.getByRole('radiogroup', { name: 'Habit' })
+  await expect(habitPick.getByRole('radio', { checked: true })).toHaveCount(1)
+  await habitPick.getByRole('radio', { name: 'Eat Right' }).click()
+  await expect(habitPick.getByRole('radio', { name: 'Eat Right' })).toHaveAttribute('aria-checked', 'true')
   await d2.getByLabel(/^Target/).fill('6')
   await expect(d2.getByRole('button', { name: 'Save goal' })).toBeEnabled()
   await d2.getByRole('button', { name: 'Save goal' }).click()

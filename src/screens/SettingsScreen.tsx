@@ -24,7 +24,7 @@ function Stepper({
     <div className="flex min-h-14 items-center justify-between gap-3">
       <div className="min-w-0">
         <p className={cx('text-sm font-semibold', tone)}>{label}</p>
-        <p className="text-[11px] text-slate-500 dark:text-slate-400">{sub}</p>
+        <p className="text-[11px] text-slate-600 dark:text-slate-400">{sub}</p>
       </div>
       <div className="flex items-center gap-1 rounded-full bg-slate-100 p-1 dark:bg-night">
         <button
@@ -67,13 +67,13 @@ function ActionButton({
       onClick={onClick}
       className={cx(
         'flex min-h-14 w-full items-center gap-3 rounded-xl px-3 text-left transition-colors',
-        danger ? 'bg-miss/10 text-miss hover:bg-miss/15' : 'bg-slate-50 text-brand hover:bg-slate-100 dark:bg-night dark:text-white dark:hover:bg-night-line',
+        danger ? 'bg-miss/10 text-miss-ink hover:bg-miss/15' : 'bg-slate-50 text-brand hover:bg-slate-100 dark:bg-night dark:text-white dark:hover:bg-night-line',
       )}
     >
       <span className="shrink-0">{icon}</span>
       <span className="min-w-0">
         <span className="block text-sm font-semibold">{label}</span>
-        <span className={cx('block truncate text-[11px]', danger ? 'text-miss/80' : 'text-slate-500 dark:text-slate-400')}>{sub}</span>
+        <span className={cx('block truncate text-[11px]', danger ? 'text-miss-ink' : 'text-slate-600 dark:text-slate-400')}>{sub}</span>
       </span>
     </button>
   )
@@ -109,9 +109,9 @@ export function SettingsScreen() {
         <Card>
           <CardTitle title="Weekly Budget" sub={`${t.ceiling + t.floor} planned days • ~${Math.round((t.ceiling / 7) * 100)}% Ceiling`} />
           <div className="divide-y divide-slate-100 dark:divide-night-line">
-            <Stepper label="Ceiling target" sub="Days for a Green week" value={t.ceiling} onChange={(n) => upd({ ceiling: n })} tone="text-ceiling" />
-            <Stepper label="Floor allowance" sub="Fallback days per week" value={t.floor} onChange={(n) => upd({ floor: n })} tone="text-floor" />
-            <Stepper label="Miss allowance" sub="Misses before Amber" value={t.miss} onChange={(n) => upd({ miss: n })} tone="text-miss" />
+            <Stepper label="Ceiling target" sub="Days for a Green week" value={t.ceiling} onChange={(n) => upd({ ceiling: n })} tone="text-ceiling-ink" />
+            <Stepper label="Floor allowance" sub="Fallback days per week" value={t.floor} onChange={(n) => upd({ floor: n })} tone="text-floor-ink" />
+            <Stepper label="Miss allowance" sub="Misses before Amber" value={t.miss} onChange={(n) => upd({ miss: n })} tone="text-miss-ink" />
           </div>
         </Card>
 
@@ -131,7 +131,7 @@ export function SettingsScreen() {
               { value: 'system', label: 'System' },
             ]}
           />
-          <div className="mt-2 flex justify-around text-slate-400" aria-hidden>
+          <div className="mt-2 flex justify-around text-slate-600 dark:text-slate-400" aria-hidden>
             <Sun size={14} />
             <Moon size={14} />
             <Monitor size={14} />
@@ -170,7 +170,7 @@ export function SettingsScreen() {
             {pending && (
               <div className="animate-fade rounded-xl border border-floor/40 bg-floor/10 p-3">
                 <p className="text-sm font-semibold text-brand dark:text-white">Replace all data?</p>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                <p className="text-[11px] text-slate-600 dark:text-slate-400">
                   {Object.values(pending.days).filter((d) => d.mode).length} logged days in file • Current data overwritten
                 </p>
                 <div className="mt-2 flex gap-2">
@@ -233,7 +233,7 @@ export function SettingsScreen() {
         </Card>
 
         </div>
-        <p className="pb-2 text-center text-[11px] text-slate-400">
+        <p className="pb-2 text-center text-[11px] text-slate-600 dark:text-slate-400">
           Ceiling • Floor • Miss • v1.0 • Local-first
         </p>
       </div>
@@ -258,7 +258,7 @@ function FacetTargetsCard() {
               </span>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-brand dark:text-white">{f.label}</p>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                <p className="text-[11px] text-slate-600 dark:text-slate-400">
                   {custom === undefined ? 'Auto from templates' : (
                     <button onClick={() => setFacetTarget(f.id, undefined)} className="font-semibold text-brand underline dark:text-accent">
                       Reset to auto • {fmtH(auto[f.id])}

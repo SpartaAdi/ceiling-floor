@@ -30,10 +30,10 @@ export function WeekBar({
   const hm = HEALTH_META[health]
   const over = week.floorLeft < 0
   return (
-    <section aria-label="Weekly budget" className="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 xl:flex-row xl:items-center dark:border-night-line dark:bg-night-card">
+    <section aria-label="Weekly budget" className="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-3 sm:p-4 xl:flex-row xl:items-center dark:border-night-line dark:bg-night-card">
       <div className="flex flex-wrap items-center gap-4">
         <div className="min-w-[180px]">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Weekly Budget</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Weekly Budget</p>
           <span className={cx('mt-1 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-bold', hm.bg, hm.text)}>
             <span aria-hidden>{hm.emoji}</span>
             {hm.label}
@@ -48,25 +48,25 @@ export function WeekBar({
           <Chip
             label="Ceiling"
             value={`${week.ceiling}/${targets.ceiling}`}
-            tone="bg-ceiling/10 text-ceiling"
+            tone="bg-ceiling/10 text-ceiling-ink"
             note={week.planned.ceiling ? `+${week.planned.ceiling} planned` : undefined}
           />
           <Chip
             label="Floor Left"
             value={over ? `+${-week.floorLeft} over` : String(week.floorLeft)}
-            tone={over || week.floorLeft - week.planned.floor < 0 ? 'bg-miss/10 text-miss' : 'bg-floor/10 text-floor'}
+            tone={over || week.floorLeft - week.planned.floor < 0 ? 'bg-miss/10 text-miss-ink' : 'bg-floor/10 text-floor-ink'}
             note={week.planned.floor ? `−${week.planned.floor} planned` : undefined}
           />
           <Chip
             label="Miss"
             note={week.planned.miss ? `+${week.planned.miss} planned` : undefined}
             value={String(week.miss)}
-            tone={week.miss > targets.miss ? 'bg-miss/15 text-miss' : 'bg-slate-100 text-slate-500 dark:bg-night dark:text-slate-300'}
+            tone={week.miss > targets.miss ? 'bg-miss/15 text-miss-ink' : 'bg-slate-100 text-slate-600 dark:bg-night dark:text-slate-300'}
           />
         </div>
       </div>
 
-      <div className="grid flex-1 grid-cols-7 gap-1.5 xl:ml-auto xl:max-w-[520px]" role="list" aria-label="This week">
+      <div className="grid flex-1 grid-cols-7 gap-1 sm:gap-1.5 xl:ml-auto xl:max-w-[520px]" role="list" aria-label="This week">
         {week.days.map((d, i) => {
           const m = d.mode ? MODE_META[d.mode] : null
           const p = !m && d.plan ? MODE_META[d.plan] : null
@@ -84,17 +84,17 @@ export function WeekBar({
                 d.future && !p && 'opacity-60',
               )}
             >
-              <span className={cx('text-[9px] font-bold uppercase sm:text-[10px]', d.isToday ? 'text-brand dark:text-accent' : 'text-slate-400')}>
+              <span className={cx('text-[9px] font-bold uppercase sm:text-[10px]', d.isToday ? 'text-brand dark:text-accent' : 'text-slate-600 dark:text-slate-400')}>
                 {d.isToday ? 'Today' : DOW_SHORT[i]}
               </span>
               <span
                 className={cx(
                   'flex size-9 items-center justify-center rounded-full text-sm font-bold tabular-nums',
                   m
-                    ? cx(m.bg, 'text-white')
+                    ? cx(m.solid, 'text-white')
                     : p
                       ? cx('border-2 border-dashed bg-white dark:bg-night', p.text, p.border)
-                      : 'bg-slate-100 text-slate-500 dark:bg-night dark:text-slate-300',
+                      : 'bg-slate-100 text-slate-600 dark:bg-night dark:text-slate-300',
                 )}
               >
                 {fromKey(d.key).getDate()}

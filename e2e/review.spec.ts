@@ -60,5 +60,7 @@ test('weekly review: nudge, scorecard, reflect, plan next week', async ({ page, 
 test('review on an empty week explains what to do', async ({ page, errors: _ }) => {
   await openAt(page, '2026-11-18T12:00:00')
   await nav(page, 'Review').click()
-  await expect(page.getByText('Nothing logged this week')).toBeVisible()
+  await expect(page.getByText('Nothing logged this week yet')).toBeVisible()
+  await page.getByRole('button', { name: 'Log today' }).click()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Today')
 })

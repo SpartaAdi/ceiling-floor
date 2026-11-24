@@ -131,9 +131,9 @@ function forecastLine(p: {
 }
 
 export const HEALTH_META: Record<WeekHealth, { label: string; emoji: string; text: string; bg: string }> = {
-  green: { label: 'Green Week', emoji: '🟢', text: 'text-ceiling', bg: 'bg-ceiling/10' },
-  amber: { label: 'Amber Week', emoji: '🟡', text: 'text-floor', bg: 'bg-floor/10' },
-  red: { label: 'Red Week', emoji: '🔴', text: 'text-miss', bg: 'bg-miss/10' },
+  green: { label: 'Green Week', emoji: '🟢', text: 'text-ceiling-ink', bg: 'bg-ceiling/10' },
+  amber: { label: 'Amber Week', emoji: '🟡', text: 'text-floor-ink', bg: 'bg-floor/10' },
+  red: { label: 'Red Week', emoji: '🔴', text: 'text-miss-ink', bg: 'bg-miss/10' },
 }
 
 /* ---------- Timeframes ---------- */

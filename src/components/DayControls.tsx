@@ -15,27 +15,27 @@ const TILES: Record<
     sub: 'Full plan',
     key: 'C',
     Icon: ArrowUpToLine,
-    idle: 'border-ceiling/40 bg-ceiling/5 text-ceiling hover:border-ceiling hover:bg-ceiling/10',
-    active: 'border-ceiling bg-ceiling text-white shadow-lg shadow-ceiling/30',
-    planned: 'border-dashed border-ceiling bg-ceiling/15 text-ceiling',
+    idle: 'border-ceiling/40 bg-ceiling/5 text-ceiling-ink hover:border-ceiling hover:bg-ceiling/10',
+    active: 'border-ceiling-solid bg-ceiling-solid text-white shadow-lg shadow-ceiling/30',
+    planned: 'border-dashed border-ceiling bg-ceiling/15 text-ceiling-ink',
   },
   floor: {
     label: 'Floor',
     sub: 'Minimum day',
     key: 'F',
     Icon: ArrowDownToLine,
-    idle: 'border-floor/40 bg-floor/5 text-floor hover:border-floor hover:bg-floor/10',
-    active: 'border-floor bg-floor text-white shadow-lg shadow-floor/30',
-    planned: 'border-dashed border-floor bg-floor/15 text-floor',
+    idle: 'border-floor/40 bg-floor/5 text-floor-ink hover:border-floor hover:bg-floor/10',
+    active: 'border-floor-solid bg-floor-solid text-white shadow-lg shadow-floor/30',
+    planned: 'border-dashed border-floor bg-floor/15 text-floor-ink',
   },
   miss: {
     label: 'Miss',
     sub: 'Off-track',
     key: 'M',
     Icon: CircleSlash,
-    idle: 'border-miss/40 bg-miss/5 text-miss hover:border-miss hover:bg-miss/10',
-    active: 'border-miss bg-miss text-white shadow-lg shadow-miss/30',
-    planned: 'border-dashed border-miss bg-miss/15 text-miss',
+    idle: 'border-miss/40 bg-miss/5 text-miss-ink hover:border-miss hover:bg-miss/10',
+    active: 'border-miss-solid bg-miss-solid text-white shadow-lg shadow-miss/30',
+    planned: 'border-dashed border-miss bg-miss/15 text-miss-ink',
   },
 }
 
@@ -97,24 +97,24 @@ export function ModeTiles({ date, day, future = false, showKeys = true }: { date
       <div className="mt-3 flex min-h-8 items-center justify-between gap-2 text-sm">
         {future ? (
           mode ? (
-            <span className={cx('font-semibold', mode === 'ceiling' ? 'text-ceiling' : mode === 'floor' ? 'text-floor' : 'text-miss')}>
+            <span className={cx('font-semibold', mode === 'ceiling' ? 'text-ceiling-ink' : mode === 'floor' ? 'text-floor-ink' : 'text-miss-ink')}>
               Planned {TILES[mode].label} • Applies on the day • Click again to clear
             </span>
           ) : (
-            <span className="font-medium text-slate-500 dark:text-slate-400">No plan yet • Pick what this day will be</span>
+            <span className="font-medium text-slate-600 dark:text-slate-400">No plan yet • Pick what this day will be</span>
           )
         ) : mode ? (
-          <span className={cx('font-semibold', mode === 'ceiling' ? 'text-ceiling' : mode === 'floor' ? 'text-floor' : 'text-miss')}>
+          <span className={cx('font-semibold', mode === 'ceiling' ? 'text-ceiling-ink' : mode === 'floor' ? 'text-floor-ink' : 'text-miss-ink')}>
             {TILES[mode].label} day • {score.done}/{score.total} blocks done
             {day?.plan === mode && <span className="font-medium opacity-70"> • as planned</span>}
           </span>
         ) : (
-          <span className="font-medium text-slate-500 dark:text-slate-400">No mode yet • Pick how today went</span>
+          <span className="font-medium text-slate-600 dark:text-slate-400">No mode yet • Pick how today went</span>
         )}
         {mode && !future && (
           <button
             onClick={() => resetDay(date)}
-            className="inline-flex min-h-8 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-slate-400 hover:bg-slate-100 hover:text-brand dark:hover:bg-night dark:hover:text-white"
+            className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 hover:text-brand dark:hover:bg-night dark:hover:text-white"
           >
             <RotateCcw size={12} /> Reset
           </button>
@@ -131,16 +131,16 @@ export function MissReason({ date, day }: { date: string; day?: DayLog }) {
   const current = day.missReason
   return (
     <div className="mt-3 rounded-xl bg-miss/5 p-3">
-      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-miss/80">Miss reason • optional</p>
+      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-miss-ink">Miss reason • optional</p>
       <div className="flex flex-wrap gap-1.5">
         {REASONS.map((r) => (
           <button
             key={r}
             onClick={() => setMissReason(date, current === r ? '' : r)}
             className={cx(
-              'min-h-8 rounded-full border px-3 text-xs font-semibold transition-colors',
+              'min-h-11 rounded-full border px-3 text-xs font-semibold transition-colors',
               current === r
-                ? 'border-miss bg-miss text-white'
+                ? 'border-miss-solid bg-miss-solid text-white'
                 : 'border-slate-200 bg-white text-slate-600 hover:border-miss/50 dark:border-night-line dark:bg-night-card dark:text-slate-300',
             )}
           >
@@ -161,9 +161,9 @@ export function MissReason({ date, day }: { date: string; day?: DayLog }) {
           onChange={(e) => setCustom(e.target.value)}
           maxLength={40}
           placeholder={current && !REASONS.includes(current) ? current : 'Own reason…'}
-          className="min-h-10 flex-1 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-brand dark:border-night-line dark:bg-night dark:focus:border-accent"
+          className="min-h-11 flex-1 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-brand dark:border-night-line dark:bg-night dark:focus:border-accent"
         />
-        <button className="min-h-10 rounded-xl bg-brand px-4 text-sm font-semibold text-white dark:bg-accent dark:text-brand">Save</button>
+        <button className="min-h-11 rounded-xl bg-brand px-4 text-sm font-semibold text-white dark:bg-accent dark:text-brand">Save</button>
       </form>
     </div>
   )

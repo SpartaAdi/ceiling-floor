@@ -13,6 +13,7 @@ import {
   Info,
   Lightbulb,
   Minus,
+  ShieldCheck,
   Sprout,
   Target,
   ThumbsDown,
@@ -55,7 +56,8 @@ import {
 } from '../lib/insights'
 import { ADHERENCE_TARGET, FACETS, GROWTH_FACETS, facetTargets, fmtH, type FacetDef } from '../lib/facets'
 import { DOW_LETTER, addDays, fmtLong, fmtMonth, fromKey, toKey, weekStartOf } from '../lib/time'
-import { Card, CardTitle, MODE_META, PageHeader, Segmented, cx } from '../components/ui'
+import { Card, CardTitle, EmptyState, MODE_META, PageHeader, Segmented, cx } from '../components/ui'
+import { useNav } from '../nav'
 import { GoalRow } from '../components/GoalBits'
 import { activeGoals, evaluateGoal } from '../lib/goals'
 
@@ -105,7 +107,7 @@ export function DashboardScreen({ now, onOpenDay }: { now: Date; onOpenDay: (d: 
     <>
       <PageHeader
         title="Dashboard"
-        sub={`${fmtLong(m.range[0])} – ${fmtLong(m.range[1])} • ${m.bd.total} logged days`}
+        sub={`${fmtLong(m.range[0])} – ${fmtLong(m.range[1])} · ${m.rangeDays} day${m.rangeDays === 1 ? '' : 's'} • ${m.bd.total} logged`}
         right={
           <div className="w-full md:w-[420px]">
             <Segmented
@@ -131,7 +133,7 @@ export function DashboardScreen({ now, onOpenDay }: { now: Date; onOpenDay: (d: 
             deltaFmt={(d) => `${d > 0 ? '+' : ''}${d} pts`}
           />
           <Kpi
-            icon={<Sprout size={18} className="text-ceiling" />}
+            icon={<Sprout size={18} className="text-ceiling-ink" />}
             label="Growth Hours"
             value={fmtH(m.growth)}
             sub={`Deep • Fitness • Mind • Reading`}
@@ -139,15 +141,15 @@ export function DashboardScreen({ now, onOpenDay }: { now: Date; onOpenDay: (d: 
             deltaFmt={(d) => `${d > 0 ? '+' : '−'}${fmtH(Math.abs(d))}`}
           />
           <Kpi
-            icon={<CheckCircle2 size={18} className="text-ceiling" />}
+            icon={<CheckCircle2 size={18} className="text-ceiling-ink" />}
             label="Ceiling Rate"
             value={`${m.bd.pCeiling}%`}
             sub={`${m.bd.ceiling} Ceiling • ${m.bd.floor} Floor • ${m.bd.miss} Miss`}
             delta={m.prevBd && m.prevBd.total ? m.bd.pCeiling - m.prevBd.pCeiling : null}
             deltaFmt={(d) => `${d > 0 ? '+' : ''}${d} pts`}
           />
-          <Kpi icon={<Flame size={18} className="text-floor" />} label="Non-Miss Streak" value={`${streak.current}`} unit=" days" sub={`Best • ${streak.best} days`} />
-          <Kpi icon={<Trophy size={18} className="text-accent" />} label="Green Weeks" value={`${gw.green}`} sub={`${gw.total} weeks closed`} />
+          <Kpi icon={<Flame size={18} className="text-floor-ink" />} label="Non-Miss Streak" value={`${streak.current}`} unit=" days" sub={`Best • ${streak.best} days`} />
+          <Kpi icon={<Trophy size={18} className="text-amber-600 dark:text-accent" />} label="Green Weeks" value={`${gw.green}`} sub={`${gw.total} weeks closed`} />
         </div>
 
         {/* Life facets */}
@@ -155,7 +157,7 @@ export function DashboardScreen({ now, onOpenDay }: { now: Date; onOpenDay: (d: 
           <div className="mb-3 flex items-end justify-between">
             <div>
               <h2 className="text-lg font-bold text-brand dark:text-white">Life Facets</h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 Hours vs weekly target • Partial credit from every ✓ and ✕ • {m.prevFacets ? 'Change vs previous period' : 'No previous period yet'}
               </p>
             </div>
@@ -204,14 +206,14 @@ export function DashboardScreen({ now, onOpenDay }: { now: Date; onOpenDay: (d: 
 /* ---------- KPI ---------- */
 
 function Delta({ value, fmt, invert = false }: { value: number | null; fmt: (d: number) => string; invert?: boolean }) {
-  if (value === null) return <span className="text-[11px] text-slate-400">No prior data</span>
+  if (value === null) return <span className="text-[11px] text-slate-600 dark:text-slate-400">No prior data</span>
   const flat = Math.abs(value) < 0.05
   const good = invert ? value < 0 : value > 0
   return (
     <span
       className={cx(
-        'inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[11px] font-bold tabular-nums',
-        flat ? 'bg-slate-100 text-slate-500 dark:bg-night dark:text-slate-400' : good ? 'bg-ceiling/10 text-ceiling' : 'bg-miss/10 text-miss',
+        'inline-flex items-center gap-0.5 rounded-lg px-1.5 py-0.5 text-[11px] font-bold tabular-nums',
+        flat ? 'bg-slate-100 text-slate-600 dark:bg-night dark:text-slate-400' : good ? 'bg-ceiling/10 text-ceiling-ink' : 'bg-miss/10 text-miss-ink',
       )}
     >
       {flat ? <Minus size={11} /> : value > 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
@@ -240,14 +242,14 @@ function Kpi({
   return (
     <Card className="flex flex-col gap-1">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">{label}</span>
+        <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">{label}</span>
         {icon}
       </div>
       <p className="text-3xl font-bold tracking-tight tabular-nums text-brand dark:text-white">
         {value}
-        {unit && <span className="text-base font-semibold text-slate-400">{unit}</span>}
+        {unit && <span className="text-base font-semibold text-slate-600 dark:text-slate-400">{unit}</span>}
       </p>
-      <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">{sub}</p>
+      <p className="truncate text-[11px] text-slate-600 dark:text-slate-400">{sub}</p>
       {deltaFmt && delta !== undefined && (
         <div className="mt-1">
           <Delta value={delta} fmt={deltaFmt} />
@@ -260,10 +262,10 @@ function Kpi({
 /* ---------- Facet card ---------- */
 
 const STATUS_META: Record<FacetStatus, { label: string; cls: string; Icon: typeof CheckCircle2 }> = {
-  'on-track': { label: 'On track', cls: 'bg-ceiling/10 text-ceiling', Icon: CheckCircle2 },
-  behind: { label: 'Behind', cls: 'bg-floor/10 text-floor', Icon: AlertTriangle },
-  'off-track': { label: 'Off track', cls: 'bg-miss/10 text-miss', Icon: XCircle },
-  'no-data': { label: 'No data', cls: 'bg-slate-100 text-slate-400 dark:bg-night', Icon: CircleDashed },
+  'on-track': { label: 'On track', cls: 'bg-ceiling/10 text-ceiling-ink', Icon: CheckCircle2 },
+  behind: { label: 'Behind', cls: 'bg-floor/10 text-floor-ink', Icon: AlertTriangle },
+  'off-track': { label: 'Off track', cls: 'bg-miss/10 text-miss-ink', Icon: XCircle },
+  'no-data': { label: 'No data', cls: 'bg-slate-100 text-slate-600 dark:text-slate-400 dark:bg-night', Icon: CircleDashed },
 }
 
 function Sparkline({ values, color, label }: { values: (number | null)[]; color: string; label: string }) {
@@ -312,7 +314,7 @@ function FacetCard({
         </span>
         <div className="min-w-0 flex-1">
           <h3 className="truncate text-[15px] font-semibold text-brand dark:text-white">{def.label}</h3>
-          <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">{def.sub}</p>
+          <p className="truncate text-[11px] text-slate-600 dark:text-slate-400">{def.sub}</p>
         </div>
       </div>
 
@@ -321,7 +323,7 @@ function FacetCard({
           <span className="text-3xl font-bold tracking-tight tabular-nums text-brand dark:text-white">
             {hours ? fmtH(stat.hours) : stat.score === null ? '—' : `${stat.score}%`}
           </span>
-          <span className="block truncate text-xs text-slate-400">
+          <span className="block truncate text-xs text-slate-600 dark:text-slate-400">
             {hours ? `of ${fmtH(expected ?? 0)} target${rangeDays !== 7 ? ' pace' : ''}` : `kept • target ${ADHERENCE_TARGET}%`}
           </span>
         </div>
@@ -334,7 +336,7 @@ function FacetCard({
         <div className="h-full rounded-full transition-all" style={{ width: `${progress}%`, background: def.color }} />
       </div>
 
-      <p className="text-xs text-slate-500 dark:text-slate-400">
+      <p className="text-xs text-slate-600 dark:text-slate-400">
         {hours
           ? stat.blockPct === null
             ? 'Nothing planned yet'
@@ -355,6 +357,7 @@ function FacetCard({
 /* ---------- Insights ---------- */
 
 function InsightsPanel({ insights }: { insights: Insight[] }) {
+  const { go } = useNav()
   const wins = insights.filter((i) => i.tone === 'good').slice(0, 4)
   const watch = insights.filter((i) => i.tone === 'bad').slice(0, 4)
   const notes = insights.filter((i) => i.tone === 'info').slice(0, 3)
@@ -365,14 +368,14 @@ function InsightsPanel({ insights }: { insights: Insight[] }) {
         <span
           className={cx(
             'mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-lg',
-            i.tone === 'good' ? 'bg-ceiling/10 text-ceiling' : i.tone === 'bad' ? 'bg-miss/10 text-miss' : 'bg-brand/10 text-brand dark:bg-accent/10 dark:text-accent',
+            i.tone === 'good' ? 'bg-ceiling/10 text-ceiling-ink' : i.tone === 'bad' ? 'bg-miss/10 text-miss-ink' : 'bg-brand/10 text-brand dark:bg-accent/10 dark:text-accent',
           )}
         >
           <Icon size={14} />
         </span>
         <div className="min-w-0">
           <p className="text-sm font-semibold text-brand dark:text-white">{i.title}</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">{i.sub}</p>
+          <p className="text-xs text-slate-600 dark:text-slate-400">{i.sub}</p>
         </div>
       </li>
     )
@@ -390,12 +393,20 @@ function InsightsPanel({ insights }: { insights: Insight[] }) {
     ) : null
   return (
     <Card>
-      <CardTitle title="Insights" sub="What's working • What needs attention" right={<Lightbulb size={18} className="text-accent" />} />
+      <CardTitle title="Insights" sub="What's working • What needs attention" right={<Lightbulb size={18} className="text-amber-600 dark:text-accent" />} />
       <div className="flex flex-col gap-5">
-        <Group title="Progressing" items={wins} cls="text-ceiling" />
-        <Group title="Falling behind" items={watch} cls="text-miss" />
-        <Group title="Patterns" items={notes} cls="text-slate-400" />
-        {!insights.length && <p className="text-sm text-slate-400">Log a few days to unlock insights</p>}
+        <Group title="Progressing" items={wins} cls="text-ceiling-ink" />
+        <Group title="Falling behind" items={watch} cls="text-miss-ink" />
+        <Group title="Patterns" items={notes.filter((n) => n.title !== 'Log a few more days')} cls="text-slate-600 dark:text-slate-400" />
+        {(insights.length === 0 || (insights.length === 1 && insights[0].title === 'Log a few more days')) && (
+          <EmptyState
+            compact
+            icon={<Lightbulb size={22} />}
+            title="Insights unlock after 3 logged days"
+            tip={insights[0]?.sub ?? 'Log a few days to see what is working'}
+            action={{ label: 'Log today', onClick: () => go('today') }}
+          />
+        )}
       </div>
     </Card>
   )
@@ -505,7 +516,7 @@ function DayMix({ bd, mc }: { bd: ReturnType<typeof breakdown>; mc: ReturnType<t
   return (
     <Card>
       <CardTitle title="Day Mix" sub="Share • Growth per day • Energy" />
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col items-center gap-4 min-[420px]:flex-row">
         <div className="relative size-[120px] shrink-0">
           {bd.total > 0 ? (
             <PieChart width={120} height={120}>
@@ -521,16 +532,16 @@ function DayMix({ bd, mc }: { bd: ReturnType<typeof breakdown>; mc: ReturnType<t
           )}
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
             <span className="text-xl font-bold tabular-nums text-brand dark:text-white">{bd.total}</span>
-            <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">days</span>
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">days</span>
           </div>
         </div>
-        <table className="w-full text-xs">
+        <table className="w-full min-w-0 text-xs">
           <thead>
-            <tr className="text-left text-[10px] uppercase tracking-wider text-slate-400">
+            <tr className="text-left text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-400">
               <th className="pb-1.5 font-semibold">Mode</th>
-              <th className="pb-1.5 text-right font-semibold">Share</th>
-              <th className="pb-1.5 text-right font-semibold">Growth</th>
-              <th className="pb-1.5 text-right font-semibold">Energy</th>
+              <th className="pb-1.5 pl-3 text-right font-semibold">Share</th>
+              <th className="pb-1.5 pl-3 text-right font-semibold">Growth</th>
+              <th className="pb-1.5 pl-3 text-right font-semibold">Energy</th>
             </tr>
           </thead>
           <tbody>
@@ -541,9 +552,9 @@ function DayMix({ bd, mc }: { bd: ReturnType<typeof breakdown>; mc: ReturnType<t
                     <span className={cx('size-2.5 rounded-sm', MODE_META[r.k].bg)} /> {MODE_META[r.k].label}
                   </span>
                 </td>
-                <td className="py-1.5 text-right tabular-nums text-slate-600 dark:text-slate-300">{r.pct}%</td>
-                <td className="py-1.5 text-right tabular-nums text-slate-600 dark:text-slate-300">{r.growth === null ? '—' : fmtH(r.growth)}</td>
-                <td className="py-1.5 text-right tabular-nums text-slate-600 dark:text-slate-300">{r.energy === null ? '—' : r.energy.toFixed(1)}</td>
+                <td className="py-1.5 pl-3 text-right tabular-nums text-slate-600 dark:text-slate-300">{r.pct}%</td>
+                <td className="py-1.5 pl-3 text-right tabular-nums text-slate-600 dark:text-slate-300">{r.growth === null ? '—' : fmtH(r.growth)}</td>
+                <td className="py-1.5 pl-3 text-right tabular-nums text-slate-600 dark:text-slate-300">{r.energy === null ? '—' : r.energy.toFixed(1)}</td>
               </tr>
             ))}
           </tbody>
@@ -554,22 +565,23 @@ function DayMix({ bd, mc }: { bd: ReturnType<typeof breakdown>; mc: ReturnType<t
 }
 
 function WinsCard({ wins, onOpenDay }: { wins: { date: string; reflection?: { win?: string } }[]; onOpenDay: (d: string) => void }) {
+  const { go } = useNav()
   return (
     <Card>
-      <CardTitle title="Recent Wins" sub="From your daily check-ins" right={<Trophy size={18} className="text-accent" />} />
+      <CardTitle title="Recent Wins" sub="From your daily check-ins" right={<Trophy size={18} className="text-amber-600 dark:text-accent" />} />
       {wins.length ? (
         <ul className="flex flex-col gap-1">
           {wins.map((d) => (
             <li key={d.date}>
               <button onClick={() => onOpenDay(d.date)} className="flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left hover:bg-slate-50 dark:hover:bg-night">
-                <span className="w-16 shrink-0 text-[11px] font-semibold text-slate-400">{fmtLong(d.date).replace(/^\w+,?\s/, '')}</span>
+                <span className="w-16 shrink-0 text-[11px] font-semibold text-slate-600 dark:text-slate-400">{fmtLong(d.date).replace(/^\w+,?\s/, '')}</span>
                 <span className="truncate text-sm text-brand dark:text-white">{d.reflection!.win}</span>
               </button>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="py-6 text-center text-sm text-slate-400">Add a win in Today's check-in</p>
+        <EmptyState compact icon={<Trophy size={22} />} title="No wins logged yet" tip="Note one good thing in today's check-in" action={{ label: 'Open check-in', onClick: () => go('today') }} />
       )}
     </Card>
   )
@@ -586,7 +598,7 @@ function Heatmap({ today, onPick }: { today: string; onPick: (d: string) => void
     setMonth(toKey(new Date(d.getFullYear(), d.getMonth() + n, 1)))
   }
   return (
-    <Card>
+    <Card className="max-sm:p-3">
       <CardTitle
         title="Calendar"
         sub={`${fmtMonth(month)} • Click a day to open or plan it`}
@@ -601,9 +613,9 @@ function Heatmap({ today, onPick }: { today: string; onPick: (d: string) => void
           </div>
         }
       />
-      <div className="grid grid-cols-7 gap-1.5 text-center">
+      <div className="grid grid-cols-7 gap-1 text-center sm:gap-1.5">
         {DOW_LETTER.map((l, i) => (
-          <span key={i} className="text-[10px] font-semibold text-slate-400">
+          <span key={i} className="text-[10px] font-semibold text-slate-600 dark:text-slate-400">
             {l}
           </span>
         ))}
@@ -620,12 +632,12 @@ function Heatmap({ today, onPick }: { today: string; onPick: (d: string) => void
               title={mode ? `${MODE_META[mode].label}${day?.energy ? ` • Energy ${day.energy}` : ''}` : plan ? `Planned ${MODE_META[plan].label}` : future ? 'Plan this day' : 'Not logged'}
               aria-label={`${k}${mode ? ` • ${MODE_META[mode].label}` : plan ? ` • Planned ${MODE_META[plan].label}` : ''}`}
               className={cx(
-                'flex h-10 items-center justify-center rounded-lg text-xs font-semibold tabular-nums transition-transform hover:scale-105',
+                'flex h-10 items-center justify-center rounded-xl text-xs font-semibold tabular-nums transition-transform hover:scale-105',
                 mode
-                  ? cx(MODE_META[mode].bg, 'text-white')
+                  ? cx(MODE_META[mode].solid, 'text-white')
                   : plan
                     ? cx('border-2 border-dashed bg-white dark:bg-night', MODE_META[plan].border, MODE_META[plan].text)
-                    : 'bg-slate-100 text-slate-500 dark:bg-night dark:text-slate-400',
+                    : 'bg-slate-100 text-slate-600 dark:bg-night dark:text-slate-400',
                 future && !plan && 'opacity-50',
                 k === today && 'ring-2 ring-brand ring-offset-2 ring-offset-white dark:ring-accent dark:ring-offset-night-card',
               )}
@@ -635,7 +647,7 @@ function Heatmap({ today, onPick }: { today: string; onPick: (d: string) => void
           )
         })}
       </div>
-      <div className="mt-3 flex justify-center gap-4 text-[11px] text-slate-500 dark:text-slate-400">
+      <div className="mt-3 flex justify-center gap-4 text-[11px] text-slate-600 dark:text-slate-400">
         {(['ceiling', 'floor', 'miss'] as const).map((md) => (
           <span key={md} className="inline-flex items-center gap-1">
             <span className={cx('size-2.5 rounded-sm', MODE_META[md].bg)} /> {MODE_META[md].label}
@@ -656,7 +668,7 @@ function IconBtn({ label, onClick, disabled, children }: { label: string; onClic
       title={label}
       disabled={disabled}
       onClick={onClick}
-      className="flex size-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-brand disabled:opacity-30 dark:hover:bg-night dark:hover:text-white"
+      className="flex size-9 items-center justify-center rounded-xl text-slate-600 hover:bg-slate-100 hover:text-brand disabled:opacity-30 dark:hover:bg-night dark:hover:text-white"
     >
       {children}
     </button>
@@ -665,6 +677,40 @@ function IconBtn({ label, onClick, disabled, children }: { label: string; onClic
 
 /* ---------- Habit matrix ---------- */
 
+const pctTone = (pct: number) => (pct >= 80 ? 'text-ceiling-ink' : pct >= 50 ? 'text-floor-ink' : 'text-miss-ink')
+
+function HabitDot({
+  cell,
+  label,
+  letter,
+  isToday,
+  onToggle,
+}: {
+  cell: { key: string; future: boolean; done: boolean }
+  label: string
+  letter?: string
+  isToday?: boolean
+  onToggle: () => void
+}) {
+  return (
+    <button
+      disabled={cell.future}
+      onClick={onToggle}
+      aria-label={`${label} ${cell.key} ${cell.done ? 'done' : 'not done'}`}
+      aria-pressed={cell.done}
+      className="group flex flex-col items-center justify-center gap-0.5 disabled:opacity-30"
+    >
+      {letter && <span className={cx('text-[10px] font-semibold', isToday ? 'text-brand dark:text-accent' : 'text-slate-600 dark:text-slate-400')}>{letter}</span>}
+      <span
+        className={cx(
+          'size-5 rounded-full transition-all group-hover:scale-110',
+          cell.done ? 'bg-ceiling' : 'border-2 border-slate-300 group-hover:border-slate-500 dark:border-night-line',
+        )}
+      />
+    </button>
+  )
+}
+
 function HabitMatrix({ today }: { today: string }) {
   const { data, toggleHabit, toggleCare } = useStore()
   const [ws, setWs] = useState(weekStartOf(today))
@@ -672,10 +718,10 @@ function HabitMatrix({ today }: { today: string }) {
   const isCurrent = ws === weekStartOf(today)
   const careDate = isCurrent ? today : addDays(ws, 5)
   return (
-    <Card>
+    <Card className="max-sm:p-3">
       <CardTitle
         title="Habit Matrix"
-        sub={`${isCurrent ? 'This week' : 'Week of ' + fmtLong(ws)} • Click a dot to edit`}
+        sub={`${isCurrent ? 'This week' : 'Week of ' + fmtLong(ws)} • Tap a dot to edit`}
         right={
           <div className="-mr-1 -mt-1 flex">
             <IconBtn label="Previous week" onClick={() => setWs(addDays(ws, -7))}>
@@ -687,37 +733,38 @@ function HabitMatrix({ today }: { today: string }) {
           </div>
         }
       />
-      <div className="grid grid-cols-[5rem_repeat(7,minmax(0,1fr))_2.5rem] items-center gap-y-1 sm:grid-cols-[6.5rem_repeat(7,minmax(0,1fr))_3rem]">
+      {/* Phone: one row per habit so seven 44px dots fit */}
+      <ul className="flex flex-col gap-3 sm:hidden">
+        {hw.daily.map((row) => (
+          <li key={row.habit.id}>
+            <div className="mb-1 flex items-baseline justify-between">
+              <span className="text-sm font-semibold text-brand dark:text-white">{row.habit.label}</span>
+              <span className={cx('text-xs font-bold tabular-nums', pctTone(row.pct))}>{row.pct}%</span>
+            </div>
+            <div className="grid grid-cols-7 gap-1">
+              {row.cells.map((c, i) => (
+                <HabitDot key={c.key} cell={c} label={row.habit.label} letter={DOW_LETTER[i]} isToday={c.key === today} onToggle={() => toggleHabit(c.key, row.habit.id)} />
+              ))}
+            </div>
+          </li>
+        ))}
+      </ul>
+      {/* Wider screens: compact matrix */}
+      <div className="hidden grid-cols-[6.5rem_repeat(7,minmax(0,1fr))_3rem] items-center gap-y-1 sm:grid">
         <span />
         {DOW_LETTER.map((l, i) => (
-          <span key={i} className={cx('text-center text-[10px] font-semibold', hw.keys[i] === today ? 'text-brand dark:text-accent' : 'text-slate-400')}>
+          <span key={i} className={cx('text-center text-[10px] font-semibold', hw.keys[i] === today ? 'text-brand dark:text-accent' : 'text-slate-600 dark:text-slate-400')}>
             {l}
           </span>
         ))}
-        <span className="text-right text-[10px] font-semibold text-slate-400">%</span>
+        <span className="text-right text-[10px] font-semibold text-slate-600 dark:text-slate-400">%</span>
         {hw.daily.map((row) => (
           <div key={row.habit.id} className="contents">
             <span className="truncate text-[13px] font-medium text-brand dark:text-white">{row.habit.label}</span>
             {row.cells.map((c) => (
-              <button
-                key={c.key}
-                disabled={c.future}
-                onClick={() => toggleHabit(c.key, row.habit.id)}
-                aria-label={`${row.habit.label} ${c.key} ${c.done ? 'done' : 'not done'}`}
-                aria-pressed={c.done}
-                className="group flex h-9 items-center justify-center disabled:opacity-30"
-              >
-                <span
-                  className={cx(
-                    'size-5 rounded-full transition-all group-hover:scale-110',
-                    c.done ? 'bg-ceiling' : 'border-2 border-slate-200 group-hover:border-slate-400 dark:border-night-line',
-                  )}
-                />
-              </button>
+              <HabitDot key={c.key} cell={c} label={row.habit.label} onToggle={() => toggleHabit(c.key, row.habit.id)} />
             ))}
-            <span className={cx('text-right text-xs font-bold tabular-nums', row.pct >= 80 ? 'text-ceiling' : row.pct >= 50 ? 'text-floor' : 'text-miss')}>
-              {row.pct}%
-            </span>
+            <span className={cx('text-right text-xs font-bold tabular-nums', pctTone(row.pct))}>{row.pct}%</span>
           </div>
         ))}
       </div>
@@ -729,8 +776,8 @@ function HabitMatrix({ today }: { today: string }) {
               onClick={() => toggleCare(w.doneOn ?? careDate, w.habit.id)}
               aria-pressed={!!w.doneOn}
               className={cx(
-                'flex min-h-10 flex-1 items-center justify-between gap-2 rounded-xl border-2 px-3 text-[13px] font-semibold',
-                w.doneOn ? 'border-ceiling bg-ceiling/10 text-ceiling' : 'border-slate-200 text-slate-500 hover:border-slate-400 dark:border-night-line dark:text-slate-300',
+                'flex min-h-11 flex-1 items-center justify-between gap-2 rounded-xl border-2 px-3 text-[13px] font-semibold',
+                w.doneOn ? 'border-ceiling bg-ceiling/10 text-ceiling-ink' : 'border-slate-200 text-slate-600 hover:border-slate-400 dark:border-night-line dark:text-slate-300',
               )}
             >
               <span className="truncate">{w.habit.label}</span>
@@ -750,12 +797,12 @@ function StatRow({ s, tone }: { s: BlockStat; tone: 'good' | 'bad' }) {
     <li>
       <div className="flex items-baseline justify-between gap-2">
         <span className="truncate text-[13px] font-semibold text-brand dark:text-white">{s.title}</span>
-        <span className={cx('text-xs font-bold tabular-nums', tone === 'good' ? 'text-ceiling' : 'text-miss')}>{s.pct}%</span>
+        <span className={cx('text-xs font-bold tabular-nums', tone === 'good' ? 'text-ceiling-ink' : 'text-miss-ink')}>{s.pct}%</span>
       </div>
       <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-night">
         <div className={cx('h-full rounded-full', tone === 'good' ? 'bg-ceiling' : s.pct >= 70 ? 'bg-floor' : 'bg-miss')} style={{ width: `${s.pct}%` }} />
       </div>
-      <span className="text-[10px] text-slate-400">
+      <span className="text-[10px] text-slate-600 dark:text-slate-400">
         {s.done}/{s.total} done • {s.total - s.done} missed
       </span>
     </li>
@@ -763,6 +810,7 @@ function StatRow({ s, tone }: { s: BlockStat; tone: 'good' | 'bad' }) {
 }
 
 function BlockReport({ stats }: { stats: BlockStat[] }) {
+  const { go } = useNav()
   const [showAll, setShowAll] = useState(false)
   const top = strongest(stats)
   const low = weakest(stats)
@@ -771,12 +819,12 @@ function BlockReport({ stats }: { stats: BlockStat[] }) {
     <Card>
       <CardTitle title="Block Report" sub="Ceiling & Floor days • Every ✕ counts" />
       {stats.length === 0 ? (
-        <p className="py-4 text-center text-sm text-slate-400">No Ceiling or Floor days yet</p>
+        <EmptyState compact icon={<ShieldCheck size={22} />} title="No logged days yet" tip="Log Ceiling or Floor days to see your strongest and weakest blocks" action={{ label: 'Log today', onClick: () => go('today') }} />
       ) : (
         <>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div>
-              <p className="mb-3 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-ceiling">
+              <p className="mb-3 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-ceiling-ink">
                 <ThumbsUp size={12} /> Strongest
               </p>
               <ul className="flex flex-col gap-3">
@@ -786,7 +834,7 @@ function BlockReport({ stats }: { stats: BlockStat[] }) {
               </ul>
             </div>
             <div>
-              <p className="mb-3 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-miss">
+              <p className="mb-3 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-miss-ink">
                 <ThumbsDown size={12} /> Most missed
               </p>
               {low.length ? (
@@ -796,13 +844,13 @@ function BlockReport({ stats }: { stats: BlockStat[] }) {
                   ))}
                 </ul>
               ) : (
-                <p className="text-xs text-slate-400">No missed blocks • Clean run</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400">No missed blocks • Clean run</p>
               )}
             </div>
           </div>
           <button
             onClick={() => setShowAll((v) => !v)}
-            className="mt-5 flex min-h-10 w-full items-center justify-center gap-1 rounded-xl bg-slate-50 text-xs font-semibold text-slate-500 hover:bg-slate-100 dark:bg-night dark:text-slate-300"
+            className="mt-5 flex min-h-11 w-full items-center justify-center gap-1 rounded-xl bg-slate-50 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:bg-night dark:text-slate-300"
           >
             {showAll ? 'Hide' : `All ${stats.length} blocks`}
             <ChevronDown size={14} className={cx('transition-transform', showAll && 'rotate-180')} />

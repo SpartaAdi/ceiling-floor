@@ -77,8 +77,9 @@ test('Mac and iPhone stay in sync through the cloud', async ({ browser }) => {
   await expect(timeline(mac).getByRole('button', { name: 'Reading missed' })).toHaveAttribute('aria-pressed', 'true')
 
   // --- Theme is per device: dark on phone, Mac unchanged; cloud copy keeps the Mac's choice
-  await phone.getByRole('button', { name: 'Expand menu' }).tap()
-  await phone.getByRole('navigation', { name: 'Main' }).getByRole('radio', { name: 'Dark' }).tap()
+  await phone.getByRole('navigation', { name: 'Main' }).getByRole('button', { name: 'More' }).tap()
+  await phone.getByRole('dialog', { name: 'More' }).getByRole('radio', { name: 'Dark' }).tap()
+  await phone.keyboard.press('Escape')
   await expect(phone.locator('html')).toHaveClass(/dark/)
   await mac.reload()
   await expect(mac.locator('html')).not.toHaveClass(/dark/)

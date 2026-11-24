@@ -10,7 +10,6 @@ export function HabitPill({
   nudge,
   onToggle,
   sub,
-  compact,
 }: {
   label: string
   done: boolean
@@ -28,11 +27,11 @@ export function HabitPill({
       aria-pressed={done}
       className={cx(
         'relative flex items-center justify-center gap-1.5 rounded-xl border-2 px-3 text-[13px] font-semibold transition-all active:scale-95',
-        compact ? 'min-h-8' : 'min-h-11',
+        'min-h-11',
         done
-          ? 'border-ceiling bg-ceiling text-white'
+          ? 'border-ceiling-solid bg-ceiling-solid text-white'
           : nudge
-            ? 'border-floor bg-floor/10 text-floor'
+            ? 'border-floor bg-floor/10 text-floor-ink'
             : 'border-slate-200 bg-white text-slate-600 hover:border-slate-400 hover:text-brand dark:border-night-line dark:bg-night dark:text-slate-300 dark:hover:border-slate-500',
       )}
     >
@@ -56,8 +55,8 @@ export function EssentialsStrip({ date, now, live }: { date: string; now: Date; 
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Daily Essentials</p>
-        <span className={cx('text-xs font-bold tabular-nums', done === habits.length ? 'text-ceiling' : 'text-slate-400')}>
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Daily Essentials</p>
+        <span className={cx('text-xs font-bold tabular-nums', done === habits.length ? 'text-ceiling-ink' : 'text-slate-600 dark:text-slate-400')}>
           {done}/{habits.length}
         </span>
       </div>
@@ -79,7 +78,7 @@ export function CareStrip({ date, always = false }: { date: string; always?: boo
   const elsewhere = habits.filter((h) => week?.care[h.id] && week.care[h.id] !== date)
   return (
     <div>
-      <p className="mb-2 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+      <p className="mb-2 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
         <Sparkles size={12} /> Weekend Care • 1x/week
       </p>
       <div role="group" aria-label="Weekend care" className="grid grid-cols-2 gap-2">
@@ -89,7 +88,7 @@ export function CareStrip({ date, always = false }: { date: string; always?: boo
         })}
       </div>
       {elsewhere.length > 0 && (
-        <p className="mt-1.5 text-[11px] text-slate-400">{elsewhere.map((h) => `${h.label} done ${fmtLong(week!.care[h.id]!)}`).join(' • ')}</p>
+        <p className="mt-1.5 text-[11px] text-slate-600 dark:text-slate-400">{elsewhere.map((h) => `${h.label} done ${fmtLong(week!.care[h.id]!)}`).join(' • ')}</p>
       )}
     </div>
   )

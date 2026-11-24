@@ -90,11 +90,11 @@ export function DayFacets({ day, blocks, future = false }: { day?: DayLog; block
       <div className="mb-3 flex items-baseline justify-between">
         <div>
           <h2 className="text-[15px] font-semibold text-brand dark:text-white">{future ? 'Planned Time' : 'Time Invested'}</h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400">{future ? 'What this plan gives each area' : 'Done vs planned • This day'}</p>
+          <p className="text-xs text-slate-600 dark:text-slate-400">{future ? 'What this plan gives each area' : 'Done vs planned • This day'}</p>
         </div>
         <p className="text-right">
           <span className="text-xl font-bold tabular-nums text-brand dark:text-white">{fmtH(future ? growthPlan : growthDone)}</span>
-          <span className="text-xs text-slate-400">{future ? ' growth planned' : ` / ${fmtH(growthPlan)} growth`}</span>
+          <span className="text-xs text-slate-600 dark:text-slate-400">{future ? ' growth planned' : ` / ${fmtH(growthPlan)} growth`}</span>
         </p>
       </div>
       <ul className="flex flex-col gap-2.5">
@@ -108,7 +108,7 @@ export function DayFacets({ day, blocks, future = false }: { day?: DayLog; block
               <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-night">
                 <div className="h-full rounded-full transition-all" style={{ width: `${((future ? p : d) / p) * 100}%`, background: f.color, opacity: future ? 0.45 : 1 }} />
               </div>
-              <span className="w-20 shrink-0 text-right text-xs tabular-nums text-slate-500 dark:text-slate-400">
+              <span className="w-20 shrink-0 text-right text-xs tabular-nums text-slate-600 dark:text-slate-400">
                 {future ? fmtH(p / 60) : `${fmtH(d / 60)} / ${fmtH(p / 60)}`}
               </span>
             </li>
@@ -140,10 +140,10 @@ export function ReflectionCard({ date, day }: { date: string; day?: DayLog }) {
   return (
     <Card>
       <div className="mb-3 flex items-center gap-2">
-        <Sparkles size={16} className="text-accent" />
+        <Sparkles size={16} className="text-amber-600 dark:text-accent" />
         <h2 className="text-[15px] font-semibold text-brand dark:text-white">Check-in</h2>
-        <span className="text-xs text-slate-400">Energy • Reflect • Plan</span>
-        <span className={cx('ml-auto text-xs font-bold tabular-nums', done === PROMPTS.length ? 'text-ceiling' : 'text-slate-400')}>
+        <span className="text-xs text-slate-600 dark:text-slate-400">Energy • Reflect • Plan</span>
+        <span className={cx('ml-auto text-xs font-bold tabular-nums', done === PROMPTS.length ? 'text-ceiling-ink' : 'text-slate-600 dark:text-slate-400')}>
           {done}/{PROMPTS.length}
         </span>
       </div>
@@ -162,7 +162,7 @@ export function ReflectionCard({ date, day }: { date: string; day?: DayLog }) {
                 'flex min-h-12 flex-col items-center justify-center rounded-xl border-2 text-xs font-semibold transition-colors',
                 active
                   ? 'border-brand bg-brand text-white dark:border-accent dark:bg-accent dark:text-brand'
-                  : 'border-slate-200 text-slate-500 hover:border-slate-400 dark:border-night-line dark:text-slate-400',
+                  : 'border-slate-200 text-slate-600 hover:border-slate-400 dark:border-night-line dark:text-slate-400',
               )}
             >
               <span className="text-base font-bold leading-none">{v}</span>
@@ -189,7 +189,7 @@ export function ReflectionCard({ date, day }: { date: string; day?: DayLog }) {
                 <span
                   className={cx(
                     'mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg',
-                    text ? 'bg-ceiling/10 text-ceiling' : 'bg-slate-100 text-slate-400 dark:bg-night',
+                    text ? 'bg-ceiling/10 text-ceiling-ink' : 'bg-slate-100 text-slate-600 dark:text-slate-400 dark:bg-night',
                   )}
                 >
                   <p.Icon size={15} />
@@ -197,9 +197,9 @@ export function ReflectionCard({ date, day }: { date: string; day?: DayLog }) {
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-semibold text-brand dark:text-white">{p.title}</span>
                   {text ? (
-                    <span className="line-clamp-2 whitespace-pre-line text-xs text-slate-600 dark:text-slate-300">{text.replace(/\n\s*\n+/g, '\n')}</span>
+                    <span className="line-clamp-2 whitespace-pre-line text-xs leading-relaxed text-slate-600 dark:text-slate-300">{text.replace(/\n\s*\n+/g, '\n')}</span>
                   ) : (
-                    <span className="block text-xs text-slate-400">{p.sub} • Click to write</span>
+                    <span className="block text-xs text-slate-600 dark:text-slate-400">{p.sub} • Click to write</span>
                   )}
                 </span>
                 <Pencil size={14} className="mt-1 shrink-0 text-slate-300" />
@@ -253,7 +253,7 @@ function WriteDialog({
         className="min-h-[300px] w-full resize-y rounded-2xl border border-slate-200 bg-white p-4 text-[15px] leading-relaxed text-brand outline-none placeholder:text-slate-400 focus:border-brand dark:border-night-line dark:bg-night-card dark:text-white dark:focus:border-accent"
       />
       <div className="mt-3 flex flex-wrap items-center gap-3">
-        <span className="text-xs text-slate-400">
+        <span className="text-xs text-slate-600 dark:text-slate-400">
           {text.length.toLocaleString()}/{MAX_NOTE.toLocaleString()} • <Kbd>⌘</Kbd> <Kbd>Enter</Kbd> to save
         </span>
         <div className="ml-auto flex gap-2">

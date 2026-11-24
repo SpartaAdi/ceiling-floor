@@ -21,11 +21,11 @@ function TickButton({ kind, active, onClick, label, disabled }: { kind: 'done' |
         'flex size-10 shrink-0 items-center justify-center rounded-xl border-2 transition-all active:scale-90 disabled:pointer-events-none disabled:opacity-30',
         done
           ? active
-            ? 'animate-pop border-ceiling bg-ceiling text-white shadow-md shadow-ceiling/30'
-            : 'border-ceiling/30 text-ceiling/60 hover:border-ceiling hover:bg-ceiling/10 hover:text-ceiling'
+            ? 'animate-pop border-ceiling-solid bg-ceiling-solid text-white shadow-md shadow-ceiling/30'
+            : 'border-ceiling/30 text-ceiling-ink/80 hover:border-ceiling hover:bg-ceiling/10 hover:text-ceiling-ink'
           : active
-            ? 'animate-pop border-miss bg-miss text-white shadow-md shadow-miss/30'
-            : 'border-miss/30 text-miss/60 hover:border-miss hover:bg-miss/10 hover:text-miss',
+            ? 'animate-pop border-miss-solid bg-miss-solid text-white shadow-md shadow-miss/30'
+            : 'border-miss/30 text-miss-ink/80 hover:border-miss hover:bg-miss/10 hover:text-miss-ink',
       )}
     >
       {done ? <Check size={18} strokeWidth={3} /> : <X size={18} strokeWidth={3} />}
@@ -68,7 +68,7 @@ function BlockRow({
       >
         <div className="w-[62px] shrink-0 font-mono sm:w-[76px]">
           <Time12 hhmm={block.start} className="block text-[13px] font-semibold text-brand sm:text-sm dark:text-white" />
-          <Time12 hhmm={block.end} end className="block text-xs text-slate-400" />
+          <Time12 hhmm={block.end} end className="block text-xs text-slate-600 dark:text-slate-400" />
         </div>
         <span className={cx('h-10 w-1 shrink-0 rounded-full', cat.dot)} aria-hidden />
         <div className="min-w-0 flex-1">
@@ -76,7 +76,7 @@ function BlockRow({
             <h3
               className={cx(
                 'truncate text-[15px] font-semibold',
-                status === 'missed' ? 'text-slate-400 line-through decoration-miss/60' : 'text-brand dark:text-white',
+                status === 'missed' ? 'text-slate-600 dark:text-slate-400 line-through decoration-miss/60' : 'text-brand dark:text-white',
               )}
             >
               {block.title}
@@ -87,13 +87,13 @@ function BlockRow({
               </span>
             )}
           </div>
-          <p className="truncate text-xs text-slate-500 dark:text-slate-400">{block.details}</p>
+          <p className="truncate text-xs text-slate-600 dark:text-slate-400">{block.details}</p>
         </div>
         <div className="hidden shrink-0 flex-col items-end gap-0.5 sm:flex">
-          <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 dark:bg-night dark:text-slate-400">
+          <span className="rounded-lg bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-night dark:text-slate-400">
             {cat.label}
           </span>
-          <span className="text-[11px] tabular-nums text-slate-400">{durationLabel(block.start, block.end)}</span>
+          <span className="text-[11px] tabular-nums text-slate-600 dark:text-slate-400">{durationLabel(block.start, block.end)}</span>
         </div>
         <div className="flex shrink-0 gap-1.5">
           <TickButton kind="done" disabled={readOnly} active={status === 'completed'} onClick={() => onSet('completed')} label={`${block.title} done`} />
@@ -155,7 +155,7 @@ export function Timeline({ date, day, blocks, now, live, readOnly }: { date: str
             extra={
               showCare && (
                 <div role="group" aria-label="Still open habits" className="mx-4 flex flex-wrap items-center gap-2 rounded-b-2xl border border-t-0 border-slate-200/80 bg-slate-50 px-3 py-2 dark:border-night-line dark:bg-night">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-floor">Still open</span>
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-floor-ink">Still open</span>
                   {eveningOpen.map((h) => (
                     <HabitPill key={h.id} label={h.label} done={false} nudge compact onToggle={() => toggleHabit(date, h.id)} />
                   ))}

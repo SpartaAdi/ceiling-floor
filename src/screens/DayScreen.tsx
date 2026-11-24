@@ -12,6 +12,7 @@ import { CatchUpCard } from '../components/CatchUpCard'
 import { Timeline } from '../components/Timeline'
 import { DayFacets, NowNext, ReflectionCard } from '../components/DayPanels'
 import { Card, Kbd, PageHeader, cx } from '../components/ui'
+import { Welcome } from '../components/Welcome'
 import type { DayMode } from '../types'
 
 const isTyping = (e: KeyboardEvent) => {
@@ -65,6 +66,8 @@ export function DayScreen({
     ? 'Today'
     : fromKey(date).toLocaleDateString(undefined, { weekday: 'long' })
   const fullDate = fromKey(date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'long' })
+  const away = Math.round((fromKey(date).getTime() - fromKey(today).getTime()) / 86_400_000)
+  const relative = away === 1 ? 'Tomorrow' : away === -1 ? 'Yesterday' : away > 1 ? `In ${away} days` : away < -1 ? `${-away} days ago` : null
 
   return (
     <>
@@ -72,7 +75,7 @@ export function DayScreen({
         title={
           <span className="flex items-center gap-2">
             {title}
-            {date < today && <span className="rounded-full bg-floor/15 px-2 py-0.5 text-xs font-semibold text-floor">Editing past day</span>}
+            {date < today && <span className="rounded-full bg-floor/15 px-2 py-0.5 text-xs font-semibold text-floor-ink">Editing past day</span>}
             {future && (
               <span className="inline-flex items-center gap-1 rounded-full bg-brand/10 px-2 py-0.5 text-xs font-semibold text-brand dark:bg-accent/15 dark:text-accent">
                 <CalendarClock size={12} /> Planning ahead
@@ -80,7 +83,7 @@ export function DayScreen({
             )}
           </span>
         }
-        sub={`${fullDate} • ${dayTypeOf(date) === 'weekend' ? 'Weekend' : 'Weekday'}`}
+        sub={`${fullDate}${relative ? ` · ${relative}` : ''} • ${dayTypeOf(date) === 'weekend' ? 'Weekend' : 'Weekday'}`}
         right={
           <>
             <div className="flex items-center rounded-xl border border-slate-200 bg-white dark:border-night-line dark:bg-night-card">
@@ -88,7 +91,7 @@ export function DayScreen({
                 onClick={() => setDate(addDays(date, -1))}
                 aria-label="Previous day"
                 title="Previous day (←)"
-                className="flex size-10 items-center justify-center rounded-l-xl text-slate-500 hover:bg-slate-100 hover:text-brand dark:hover:bg-night dark:hover:text-white"
+                className="flex size-10 items-center justify-center rounded-l-xl text-slate-600 hover:bg-slate-100 hover:text-brand dark:hover:bg-night dark:hover:text-white"
               >
                 <ChevronLeft size={18} />
               </button>
@@ -105,18 +108,20 @@ export function DayScreen({
                 disabled={date >= maxDate}
                 aria-label="Next day"
                 title="Next day (→)"
-                className="flex size-10 items-center justify-center rounded-r-xl text-slate-500 hover:bg-slate-100 hover:text-brand disabled:opacity-30 dark:hover:bg-night dark:hover:text-white"
+                className="flex size-10 items-center justify-center rounded-r-xl text-slate-600 hover:bg-slate-100 hover:text-brand disabled:opacity-30 dark:hover:bg-night dark:hover:text-white"
               >
                 <ChevronRight size={18} />
               </button>
             </div>
-            <span className="hidden h-10 items-center gap-1.5 rounded-xl bg-brand px-3 font-mono md:inline-flex text-sm font-semibold tabular-nums text-white dark:bg-night-card">
+            <span className="ml-auto inline-flex h-11 items-center gap-1.5 rounded-xl bg-brand px-3 font-mono text-sm font-semibold tabular-nums text-white md:ml-0 dark:bg-night-card">
               <Clock size={14} className="text-accent" />
               {fmtTime(now)}
             </span>
           </>
         }
       />
+
+      {isToday && <Welcome today={today} />}
 
       {reviewDue && isToday && (
         <div className="mb-4 flex flex-wrap items-center gap-3 rounded-2xl border-2 border-accent bg-accent/15 px-4 py-3">
@@ -143,9 +148,9 @@ export function DayScreen({
           {priorities.length > 0 && (
             <Card>
               <div className="mb-2.5 flex items-center gap-2">
-                <Flag size={15} className="text-accent" />
+                <Flag size={15} className="text-amber-600 dark:text-accent" />
                 <h2 className="text-[15px] font-semibold text-brand dark:text-white">Week Priorities</h2>
-                <span className="text-xs text-slate-400">From your review</span>
+                <span className="text-xs text-slate-600 dark:text-slate-400">From your review</span>
               </div>
               <ul className="flex flex-col gap-2">
                 {priorities.map((p) => {
@@ -156,7 +161,7 @@ export function DayScreen({
                         <f.Icon size={14} />
                       </span>
                       <span className="font-semibold text-brand dark:text-white">{f.label}</span>
-                      {p.note && <span className="truncate text-slate-500 dark:text-slate-400">• {p.note}</span>}
+                      {p.note && <span className="truncate text-slate-600 dark:text-slate-400">• {p.note}</span>}
                     </li>
                   )
                 })}
@@ -165,12 +170,12 @@ export function DayScreen({
           )}
           </div>
           <div className="order-2 empty:hidden lg:order-none">
-          <Card>
-            <div className="mb-3 flex items-center justify-between">
+          <Card className="scroll-mt-6" >
+            <div id="mode-card" className="mb-3 flex items-center justify-between">
               <h2 className="text-[15px] font-semibold text-brand dark:text-white">
                 {future ? 'Plan this day' : `How did ${isToday ? 'today' : 'this day'} go?`}
               </h2>
-              <span className="hidden items-center gap-1 text-[11px] text-slate-400 lg:flex">
+              <span className="hidden items-center gap-1 text-[11px] text-slate-600 dark:text-slate-400 lg:flex">
                 Press <Kbd>C</Kbd> <Kbd>F</Kbd> <Kbd>M</Kbd>
               </span>
             </div>
@@ -185,11 +190,12 @@ export function DayScreen({
               <CalendarClock size={18} className="mt-0.5 shrink-0 text-brand dark:text-accent" />
               <div className="text-sm">
                 <p className="font-semibold text-brand dark:text-white">Planned days</p>
-                <p className="text-slate-500 dark:text-slate-400">Count in the week forecast • Apply on the day • Tick blocks then</p>
+                <p className="text-slate-600 dark:text-slate-400">Count in the week forecast • Apply on the day • Tick blocks then</p>
               </div>
             </Card>
           ) : (
-            <Card className="flex flex-col gap-4">
+            <Card className="flex scroll-mt-6 flex-col gap-4">
+              <span id="habits-card" />
               <EssentialsStrip date={date} now={now} live={isToday} />
               <CareStrip date={date} />
             </Card>
@@ -200,7 +206,11 @@ export function DayScreen({
           <DayFacets day={day} blocks={blocks} future={future} />
           </div>
           <div className="order-8 empty:hidden lg:order-none">
-          {!future && <ReflectionCard key={date} date={date} day={day} />}
+          {!future && (
+            <div id="checkin-card">
+              <ReflectionCard key={date} date={date} day={day} />
+            </div>
+          )}
           </div>
         </div>
 
@@ -216,7 +226,7 @@ export function DayScreen({
           <div>
             <div className="mb-2 flex items-baseline justify-between px-1">
               <h2 className="text-[15px] font-semibold text-brand dark:text-white">Timeline</h2>
-              <span className={cx('text-xs', isPreview ? 'font-semibold text-floor' : 'text-slate-500 dark:text-slate-400')}>
+              <span className={cx('text-xs', isPreview ? 'font-semibold text-floor-ink' : 'text-slate-600 dark:text-slate-400')}>
                 {future
                   ? day?.plan && template
                     ? `${TEMPLATE_LABELS[template]} • Planned • ${blocks.length} blocks`
@@ -227,7 +237,7 @@ export function DayScreen({
               </span>
             </div>
             <Timeline key={date} date={date} day={day} blocks={blocks} now={now} live={isToday} readOnly={future} />
-            <p className="mt-3 px-1 text-center text-[11px] text-slate-400">
+            <p className="mt-3 px-1 text-center text-[11px] text-slate-600 dark:text-slate-400">
               {future ? 'Ticks unlock on the day' : 'Tick ✓ for done and ✕ for missed • Works on any day mode'}
             </p>
           </div>

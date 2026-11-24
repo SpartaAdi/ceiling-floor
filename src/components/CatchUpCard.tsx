@@ -41,7 +41,7 @@ export function CatchUpCard({ date, day, blocks, now }: { date: string; day?: Da
           <History size={16} className="text-brand dark:text-accent" />
           <div>
             <h2 className="text-sm font-semibold text-brand dark:text-white">Earlier Today</h2>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">{pending.length} unlogged • Mark each, or all at once</p>
+            <p className="text-[11px] text-slate-600 dark:text-slate-400">{pending.length} unlogged • Mark each, or all at once</p>
           </div>
         </div>
         <div className="flex items-center gap-1.5">
@@ -49,7 +49,7 @@ export function CatchUpCard({ date, day, blocks, now }: { date: string; day?: Da
             onClick={() => pending.forEach((b) => setBlockStatus(date, b.id, 'completed'))}
             aria-label="Mark all done"
             title="Mark every block above as done"
-            className="inline-flex h-9 items-center gap-1 rounded-lg border-2 border-ceiling/40 bg-white px-2.5 text-xs font-bold text-ceiling hover:border-ceiling hover:bg-ceiling/10 dark:bg-night-card"
+            className="inline-flex h-9 items-center gap-1 rounded-xl border-2 border-ceiling/40 bg-white px-2.5 text-xs font-bold text-ceiling-ink hover:border-ceiling hover:bg-ceiling/10 dark:bg-night-card"
           >
             <Check size={14} strokeWidth={3} /> All done
           </button>
@@ -57,7 +57,7 @@ export function CatchUpCard({ date, day, blocks, now }: { date: string; day?: Da
             onClick={() => pending.forEach((b) => setBlockStatus(date, b.id, 'missed'))}
             aria-label="Mark all missed"
             title="Mark every block above as missed"
-            className="inline-flex h-9 items-center gap-1 rounded-lg border-2 border-miss/40 bg-white px-2.5 text-xs font-bold text-miss hover:border-miss hover:bg-miss/10 dark:bg-night-card"
+            className="inline-flex h-9 items-center gap-1 rounded-xl border-2 border-miss/40 bg-white px-2.5 text-xs font-bold text-miss-ink hover:border-miss hover:bg-miss/10 dark:bg-night-card"
           >
             <X size={14} strokeWidth={3} /> All missed
           </button>
@@ -65,7 +65,7 @@ export function CatchUpCard({ date, day, blocks, now }: { date: string; day?: Da
             onClick={dismiss}
             aria-label="Hide for now"
             title="Hide this card • Blocks stay unlogged • Log them on the timeline"
-            className="inline-flex h-9 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-slate-400 hover:bg-white hover:text-brand dark:hover:bg-night-card dark:hover:text-white"
+            className="inline-flex h-9 items-center gap-1 rounded-xl px-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-white hover:text-brand dark:hover:bg-night-card dark:hover:text-white"
           >
             <EyeOff size={14} /> Hide
           </button>
@@ -74,19 +74,19 @@ export function CatchUpCard({ date, day, blocks, now }: { date: string; day?: Da
       <ul className="flex flex-col gap-1">
         {pending.map((b) => (
           <li key={b.id} className="flex items-center gap-2 rounded-xl bg-white px-2.5 py-1 dark:bg-night-card">
-            <Time12 hhmm={b.start} className="w-[68px] font-mono text-xs text-slate-400" />
+            <Time12 hhmm={b.start} className="w-[68px] font-mono text-xs text-slate-600 dark:text-slate-400" />
             <span className="min-w-0 flex-1 truncate text-sm font-medium text-brand dark:text-white">{b.title}</span>
             <button
               onClick={() => setBlockStatus(date, b.id, 'completed')}
               aria-label={`${b.title} done`}
-              className="flex size-11 items-center justify-center rounded-full text-ceiling hover:bg-ceiling/10"
+              className="flex size-11 items-center justify-center rounded-full text-ceiling-ink hover:bg-ceiling/10"
             >
               <Check size={20} strokeWidth={3} />
             </button>
             <button
               onClick={() => setBlockStatus(date, b.id, 'missed')}
               aria-label={`${b.title} missed`}
-              className="flex size-11 items-center justify-center rounded-full text-miss hover:bg-miss/10"
+              className="flex size-11 items-center justify-center rounded-full text-miss-ink hover:bg-miss/10"
             >
               <X size={20} strokeWidth={3} />
             </button>

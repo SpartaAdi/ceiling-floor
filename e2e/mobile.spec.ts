@@ -2,23 +2,41 @@ import { budget, expect, modeTile, openAt, phoneNav, test, timeline } from './fi
 
 // Runs in the "iphone-15-pro" project (393×852, touch, iPhone UA)
 
-test('phone menu collapses by default and expands on tap', async ({ page, errors: _ }) => {
+test('phone tab bar: thumb-zone tabs, two-cue active state, More sheet, hides while scrolling', async ({ page, errors: _ }) => {
   await openAt(page, '2026-11-18T21:05:00')
   await expect(page.getByRole('complementary', { name: 'Sidebar' })).toBeHidden()
-  await expect(page.getByRole('navigation', { name: 'Main' })).toBeHidden()
-  const toggle = page.getByRole('button', { name: 'Expand menu' })
-  await expect(toggle).toHaveAttribute('aria-expanded', 'false')
-  await toggle.click()
-  const menu = page.getByRole('navigation', { name: 'Main' })
-  await expect(menu.getByRole('button')).toHaveCount(6)
-  await expect(page.getByRole('button', { name: 'Collapse menu' })).toHaveAttribute('aria-expanded', 'true')
-  await page.getByRole('button', { name: 'Collapse menu' }).click()
-  await expect(menu).toBeHidden()
-  for (const name of ['Dashboard', 'Goals', 'Review', 'Routine', 'Settings', 'Today']) {
-    await phoneNav(page, name)
-    await expect(page.locator('header').first()).toContainText(name)
+  const bar = page.getByRole('navigation', { name: 'Main' })
+  await expect(bar.getByRole('button')).toHaveCount(5)
+  for (const n of ['Today', 'Dashboard', 'Goals', 'Review', 'More']) await expect(bar.getByRole('button', { name: n })).toBeVisible()
+  // Thumb zone: bar sits at the bottom of the screen; every tab ≥ 44×44
+  const box = (await bar.boundingBox())!
+  expect(box.y + box.height).toBeGreaterThanOrEqual(852 - 1)
+  for (const b of await bar.getByRole('button').all()) {
+    const r = (await b.boundingBox())!
+    expect(r.width).toBeGreaterThanOrEqual(44)
+    expect(r.height).toBeGreaterThanOrEqual(44)
   }
-  await expect(page.locator('header').first()).toContainText('9:05 PM')
+  // Two-cue active state: aria-current + bold label
+  const today = bar.getByRole('button', { name: 'Today' })
+  await expect(today).toHaveAttribute('aria-current', 'page')
+  await expect(today.locator('span').last()).toHaveClass(/font-bold/)
+
+  for (const name of ['Dashboard', 'Goals', 'Review', 'Routine', 'Settings', 'Today']) await phoneNav(page, name)
+  await expect(page.getByRole('main').locator('header')).toContainText('9:05 PM')
+
+  // Hides when you scroll down, returns when you scroll up
+  await phoneNav(page, 'Dashboard')
+  await page.mouse.move(200, 400)
+  await page.mouse.wheel(0, 900)
+  await expect(bar).toHaveClass(/translate-y-full/)
+  await page.mouse.wheel(0, -300)
+  await expect(bar).not.toHaveClass(/translate-y-full/)
+})
+
+test('auto-scroll to the current block does not hide the tab bar', async ({ page, errors: _ }) => {
+  await openAt(page, '2026-11-18T21:05:00')
+  await page.waitForTimeout(800) // Today scrolls to NOW
+  await expect(page.getByRole('navigation', { name: 'Main' })).not.toHaveClass(/translate-y-full/)
 })
 
 test('every page fits the iPhone width (no sideways scrolling)', async ({ page, errors: _ }) => {
@@ -67,4 +85,46 @@ test('settings on the phone explain sync is not set up yet', async ({ page, erro
   await openAt(page, '2026-11-18T12:00:00')
   await phoneNav(page, 'Settings')
   await expect(page.getByText("Sync isn't set up yet • Data stays on this device")).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Open setup guide' })).toHaveAttribute('href', /SETUP-SYNC\.md$/)
+})
+
+test('first-run checklist shows real progress and guides each step', async ({ page, errors: _ }) => {
+  await openAt(page, '2026-11-18T09:00:00')
+  const welcome = page.getByRole('region', { name: 'Get started' })
+  await expect(welcome).toContainText('1/5 done')
+  await expect(welcome.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '20')
+  await modeTile(page, 'Floor').tap()
+  await expect(welcome).toContainText('2/5 done')
+  await welcome.getByRole('button', { name: /Set your first goal/ }).tap()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Goals')
+  await page.getByRole('button', { name: /Deep work 20h/ }).tap()
+  await phoneNav(page, 'Today')
+  await expect(welcome).toContainText('3/5 done')
+  await welcome.getByRole('button', { name: 'Hide get started' }).tap()
+  await expect(welcome).toBeHidden()
+  await page.reload()
+  await expect(page.getByRole('region', { name: 'Get started' })).toBeHidden()
+})
+
+test('empty screens always offer a next step', async ({ page, errors: _ }) => {
+  await openAt(page, '2026-11-18T12:00:00')
+  await phoneNav(page, 'Review')
+  await page.getByRole('button', { name: 'Log today' }).tap()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Today')
+  await phoneNav(page, 'Dashboard')
+  await expect(page.getByText('Insights unlock after 3 logged days')).toBeVisible()
+  await page.getByRole('button', { name: 'Open check-in' }).tap()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Today')
+})
+
+test('Goals primary action sits in the thumb zone on the phone', async ({ page, errors: _ }) => {
+  await openAt(page, '2026-11-18T12:00:00')
+  await phoneNav(page, 'Goals')
+  const fab = page.getByRole('button', { name: 'New goal' })
+  await expect(fab).toHaveCount(1)
+  const r = (await fab.boundingBox())!
+  const h = await page.evaluate(() => window.innerHeight)
+  expect(r.y).toBeGreaterThan(h * 0.66) // lower third of the visible screen
+  await fab.tap()
+  await expect(page.getByRole('dialog', { name: 'New goal' })).toBeVisible()
 })

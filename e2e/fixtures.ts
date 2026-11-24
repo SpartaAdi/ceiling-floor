@@ -48,11 +48,17 @@ export const IPHONE = {
     'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1',
 }
 
-/** Phone menu: expand, pick a page (menu collapses itself). */
+/** Phone navigation: bottom tabs for main pages; Routine and Settings live under More. */
 export async function phoneNav(page: Page, name: string) {
-  await page.getByRole('button', { name: 'Expand menu' }).click()
-  await page.getByRole('navigation', { name: 'Main' }).getByRole('button', { name: new RegExp(`^${name}`) }).click()
-  await expect(page.getByRole('navigation', { name: 'Main' })).toBeHidden()
+  const bar = page.getByRole('navigation', { name: 'Main' })
+  if (name === 'Routine' || name === 'Settings') {
+    await bar.getByRole('button', { name: 'More' }).click()
+    await page.getByRole('dialog', { name: 'More' }).getByRole('button', { name: new RegExp(`^${name}`) }).click()
+    await expect(page.getByRole('dialog', { name: 'More' })).toBeHidden()
+  } else {
+    await bar.getByRole('button', { name: new RegExp(`^${name}`) }).click()
+  }
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(name === 'Review' ? 'Weekly Review' : name)
 }
 
 /** Collect runtime errors for pages made outside the default fixture. */

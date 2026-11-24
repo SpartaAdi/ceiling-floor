@@ -46,10 +46,10 @@ export function RoutineScreen() {
               aria-selected={tab === t.id}
               onClick={() => setTab(t.id)}
               className={cx(
-                'min-h-10 shrink-0 rounded-full px-3.5 text-[13px] font-semibold transition-colors',
+                'min-h-11 shrink-0 rounded-full px-3.5 text-[13px] font-semibold transition-colors',
                 tab === t.id
                   ? 'bg-brand text-white dark:bg-accent dark:text-brand'
-                  : 'bg-white text-slate-500 ring-1 ring-slate-200 dark:bg-night-card dark:text-slate-300 dark:ring-night-line',
+                  : 'bg-white text-slate-600 ring-1 ring-slate-200 dark:bg-night-card dark:text-slate-300 dark:ring-night-line',
               )}
             >
               {t.label}
@@ -64,7 +64,13 @@ export function RoutineScreen() {
 
 /* ---------- Templates ---------- */
 
-const emptyBlock = (): Block => ({ id: uid('blk'), start: '07:00', end: '08:00', title: '', details: '', category: 'deep' })
+/** Smart default: a new block starts where the last one ends (1 hour long). */
+const emptyBlock = (blocks: Block[]): Block => {
+  const last = [...blocks].sort((a, b) => toMin(a.end, true) - toMin(b.end, true)).pop()
+  const startMin = last && toMin(last.end, true) < 23 * 60 ? toMin(last.end, true) : 7 * 60
+  const hhmm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
+  return { id: uid('blk'), start: hhmm(startMin), end: hhmm(Math.min(startMin + 60, 23 * 60 + 59)), title: '', details: '', category: 'deep' }
+}
 
 function TemplateEditor({ tk }: { tk: TemplateKey }) {
   const { data, deleteBlock, resetTemplate, notify } = useStore()
@@ -74,7 +80,7 @@ function TemplateEditor({ tk }: { tk: TemplateKey }) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between px-1">
-        <span className="text-xs text-slate-500 dark:text-slate-400">
+        <span className="text-xs text-slate-600 dark:text-slate-400">
           {TEMPLATE_LABELS[tk]} • {blocks.length} blocks
         </span>
         <button
@@ -86,7 +92,7 @@ function TemplateEditor({ tk }: { tk: TemplateKey }) {
           }
           className={cx(
             'inline-flex min-h-11 items-center gap-1 px-1 text-xs font-semibold',
-            armed === 'reset' ? 'text-miss' : 'text-slate-400 hover:text-brand dark:hover:text-white',
+            armed === 'reset' ? 'text-miss-ink' : 'text-slate-600 dark:text-slate-400 hover:text-brand dark:hover:text-white',
           )}
         >
           <RotateCcw size={12} /> {armed === 'reset' ? 'Tap to confirm' : 'Reset'}
@@ -98,19 +104,19 @@ function TemplateEditor({ tk }: { tk: TemplateKey }) {
             <div className="flex min-h-16 items-center gap-3 rounded-2xl border border-slate-200/80 bg-white px-3 py-2 dark:border-night-line dark:bg-night-card">
               <div className="w-[76px] shrink-0 font-mono">
                 <Time12 hhmm={b.start} className="block text-[13px] font-semibold text-brand dark:text-white" />
-                <Time12 hhmm={b.end} end className="block text-[11px] text-slate-400" />
+                <Time12 hhmm={b.end} end className="block text-[11px] text-slate-600 dark:text-slate-400" />
               </div>
               <span className={cx('h-9 w-1 shrink-0 rounded-full', CATEGORY_META[b.category]?.dot)} />
               <button onClick={() => setEditing(b)} className="min-w-0 flex-1 text-left">
                 <div className="truncate text-[15px] font-semibold text-brand dark:text-white">{b.title}</div>
-                <div className="truncate text-xs text-slate-500 dark:text-slate-400">
+                <div className="truncate text-xs text-slate-600 dark:text-slate-400">
                   {b.details} • {durationLabel(b.start, b.end)}
                 </div>
               </button>
               <button
                 onClick={() => setEditing(b)}
                 aria-label={`Edit ${b.title}`}
-                className="flex size-11 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-brand dark:hover:bg-night"
+                className="flex size-11 shrink-0 items-center justify-center rounded-full text-slate-600 dark:text-slate-400 hover:bg-slate-100 hover:text-brand dark:hover:bg-night"
               >
                 <Pencil size={16} />
               </button>
@@ -119,7 +125,7 @@ function TemplateEditor({ tk }: { tk: TemplateKey }) {
                 aria-label={armed === b.id ? `Confirm delete ${b.title}` : `Delete ${b.title}`}
                 className={cx(
                   'flex size-11 shrink-0 items-center justify-center rounded-full',
-                  armed === b.id ? 'bg-miss text-white' : 'text-slate-400 hover:bg-miss/10 hover:text-miss',
+                  armed === b.id ? 'bg-miss-solid text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-miss/10 hover:text-miss-ink',
                 )}
               >
                 <Trash2 size={16} />
@@ -129,8 +135,8 @@ function TemplateEditor({ tk }: { tk: TemplateKey }) {
         ))}
       </ul>
       <button
-        onClick={() => setEditing(emptyBlock())}
-        className="mt-1 flex min-h-12 items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-300 text-sm font-semibold text-slate-500 hover:border-brand hover:text-brand dark:border-night-line dark:text-slate-300 dark:hover:border-accent dark:hover:text-accent"
+        onClick={() => setEditing(emptyBlock(blocks))}
+        className="mt-1 flex min-h-12 items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-300 text-sm font-semibold text-slate-600 hover:border-brand hover:text-brand dark:border-night-line dark:text-slate-300 dark:hover:border-accent dark:hover:text-accent"
       >
         <Plus size={18} /> Add block
       </button>
@@ -145,7 +151,7 @@ const inputCls =
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-400">{label}</span>
+      <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">{label}</span>
       {children}
     </label>
   )
@@ -185,7 +191,7 @@ function BlockFormBody({ tk, initial, onDone }: { tk: TemplateKey; initial: Bloc
           <input type="time" required value={b.end} onChange={(e) => set('end', e.target.value)} className={inputCls} />
         </Field>
       </div>
-      {!timeOk && <p className="-mt-1 text-xs text-miss">End must be after start</p>}
+      {!timeOk && <p className="-mt-1 text-xs text-miss-ink">End must be after start</p>}
       <Field label="Title • 2–4 words">
         <input
           value={b.title}
@@ -205,7 +211,7 @@ function BlockFormBody({ tk, initial, onDone }: { tk: TemplateKey; initial: Bloc
         />
       </Field>
       <div>
-        <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-400">Category</span>
+        <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">Category</span>
         <div className="flex flex-wrap gap-1.5">
           {CATEGORIES.map((c: Category) => (
             <button
@@ -214,7 +220,7 @@ function BlockFormBody({ tk, initial, onDone }: { tk: TemplateKey; initial: Bloc
               onClick={() => set('category', c)}
               aria-pressed={b.category === c}
               className={cx(
-                'inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 text-xs font-medium',
+                'inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3 text-xs font-medium',
                 b.category === c
                   ? 'border-brand bg-brand text-white dark:border-accent dark:bg-accent dark:text-brand'
                   : 'border-slate-200 text-slate-600 dark:border-night-line dark:text-slate-300',
@@ -253,7 +259,7 @@ function HabitsEditor() {
           <div className="mb-2 flex items-start justify-between">
             <div>
               <h2 className="text-[15px] font-semibold text-brand dark:text-white">{g.title}</h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">{g.sub}</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400">{g.sub}</p>
             </div>
             <button
               onClick={() => setEditing({ id: uid('hab'), label: '', kind: g.kind })}
@@ -271,7 +277,7 @@ function HabitsEditor() {
                   <button onClick={() => setEditing(h)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
                     <span className="truncate text-sm font-semibold text-brand dark:text-white">{h.label}</span>
                     {h.evening && (
-                      <span className="inline-flex items-center gap-0.5 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500 dark:bg-night dark:text-slate-400">
+                      <span className="inline-flex items-center gap-0.5 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-600 dark:bg-night dark:text-slate-400">
                         <Moon size={10} /> Night
                       </span>
                     )}
@@ -281,7 +287,7 @@ function HabitsEditor() {
                       </span>
                     )}
                     {h.nudgeAfter && (
-                      <span className="inline-flex items-center gap-0.5 rounded-full bg-floor/10 px-1.5 py-0.5 text-[10px] text-floor">
+                      <span className="inline-flex items-center gap-0.5 rounded-full bg-floor/10 px-1.5 py-0.5 text-[10px] text-floor-ink">
                         <Clock size={10} /> {fmt12(h.nudgeAfter)}
                       </span>
                     )}
@@ -291,7 +297,7 @@ function HabitsEditor() {
                     aria-label={armed === h.id ? `Confirm delete ${h.label}` : `Delete ${h.label}`}
                     className={cx(
                       'flex size-11 items-center justify-center rounded-full',
-                      armed === h.id ? 'bg-miss text-white' : 'text-slate-400 hover:text-miss',
+                      armed === h.id ? 'bg-miss-solid text-white' : 'text-slate-600 dark:text-slate-400 hover:text-miss-ink',
                     )}
                   >
                     <Trash2 size={16} />
@@ -310,7 +316,7 @@ function HabitsEditor() {
         }
         className={cx(
           'inline-flex min-h-11 items-center justify-center gap-1 text-xs font-semibold',
-          armed === 'reset-habits' ? 'text-miss' : 'text-slate-400',
+          armed === 'reset-habits' ? 'text-miss-ink' : 'text-slate-600 dark:text-slate-400',
         )}
       >
         <RotateCcw size={12} /> {armed === 'reset-habits' ? 'Tap to confirm' : 'Reset habits'}
@@ -349,7 +355,7 @@ function HabitForm({ initial, onDone }: { initial: Habit; onDone: () => void }) 
         <input value={h.label} maxLength={16} onChange={(e) => setH({ ...h, label: e.target.value })} placeholder="Water" className={inputCls} />
       </Field>
       <div>
-        <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-400">Frequency</span>
+        <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">Frequency</span>
         <div className="flex gap-2">
           {(['daily', 'weekly'] as HabitKind[]).map((k) => (
             <button
@@ -361,7 +367,7 @@ function HabitForm({ initial, onDone }: { initial: Habit; onDone: () => void }) 
                 'min-h-11 flex-1 rounded-xl border text-sm font-semibold',
                 h.kind === k
                   ? 'border-brand bg-brand text-white dark:border-accent dark:bg-accent dark:text-brand'
-                  : 'border-slate-200 text-slate-500 dark:border-night-line dark:text-slate-300',
+                  : 'border-slate-200 text-slate-600 dark:border-night-line dark:text-slate-300',
               )}
             >
               {k === 'daily' ? 'Daily' : '1x / Week'}
@@ -383,20 +389,31 @@ function HabitForm({ initial, onDone }: { initial: Habit; onDone: () => void }) 
           <Field label="Nudge after • optional">
             <input type="time" value={h.nudgeAfter ?? ''} onChange={(e) => setH({ ...h, nudgeAfter: e.target.value || undefined })} className={inputCls} />
           </Field>
-          <Field label="Counts toward • Dashboard facet">
-            <select
-              value={h.facet ?? ''}
-              onChange={(e) => setH({ ...h, facet: (e.target.value || undefined) as FacetId | undefined })}
-              className={inputCls}
-            >
-              <option value="">None</option>
-              {FACETS.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.label}
-                </option>
-              ))}
-            </select>
-          </Field>
+          <div>
+            <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Counts toward • Dashboard area</span>
+            <div role="radiogroup" aria-label="Counts toward" className="flex flex-wrap gap-1.5">
+              {[{ id: undefined, label: 'None', color: undefined as string | undefined }, ...FACETS].map((f) => {
+                const on = h.facet === f.id
+                return (
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={on}
+                    key={f.label}
+                    onClick={() => setH({ ...h, facet: f.id as FacetId | undefined })}
+                    className={cx(
+                      'inline-flex h-11 items-center gap-1.5 rounded-full border-2 px-3.5 text-sm font-semibold transition-colors',
+                      on ? 'text-brand dark:text-white' : 'border-slate-200 text-slate-600 hover:border-slate-400 dark:border-night-line dark:text-slate-300',
+                      on && !f.color && 'border-brand bg-brand text-white dark:border-accent dark:bg-accent dark:text-brand',
+                    )}
+                    style={on && f.color ? { background: `${f.color}1F`, borderColor: f.color } : undefined}
+                  >
+                    {f.label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
         </>
       )}
       <button

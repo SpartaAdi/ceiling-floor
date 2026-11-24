@@ -12,6 +12,6 @@ test('desktop sidebar collapses to icons, keeps working, remembers the choice', 
   await expect.poll(async () => (await sidebar.boundingBox())!.width).toBeLessThan(100)
   await sidebar.getByRole('button', { name: 'Expand menu' }).click()
   await expect.poll(async () => (await sidebar.boundingBox())!.width).toBeGreaterThan(200)
-  // phone bar is hidden on desktop
-  await expect(page.getByRole('button', { name: 'Expand menu' })).toHaveCount(0)
+  // phone tab bar is hidden on desktop
+  await expect(page.getByRole('button', { name: 'More' })).toHaveCount(0)
 })
