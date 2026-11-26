@@ -3,6 +3,7 @@ import { activeGoals, evaluateGoal } from './goals'
 import { computeFacets, growthHours, lifeScore, logsIn } from './insights'
 import { blockReport, blockScore, summarizeWeek, weakest } from './stats'
 import { addDays, dowIndex, weekDays, weekStartOf } from './time'
+import { dietAdherence, eatOutsInWeek } from './diet'
 
 /** Sunday reviews the current week; any other day reviews the previous week. */
 export const defaultReviewWeek = (today: string) => (dowIndex(today) === 6 ? weekStartOf(today) : addDays(weekStartOf(today), -7))
@@ -55,6 +56,7 @@ export function weekReview(data: AppData, ws: string, today: string) {
     toughest,
     avgEnergy: energies.length ? energies.reduce((a, b) => a + b) / energies.length : null,
     habits,
+    diet: { ...dietAdherence(data, days), eatOuts: eatOutsInWeek(data, ws).length, allowance: data.mealPlan.eatOutPerWeek },
     goals,
     bottleneck: weakest(blockReport(days))[0] ?? null,
     wins: reflect((d) => d.reflection?.win),

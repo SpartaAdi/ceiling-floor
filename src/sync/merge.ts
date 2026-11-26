@@ -8,7 +8,7 @@ import type { AppData, DayLog, Settings, SyncMeta, WeekLog } from '../types'
  *  • theme stays per device
  */
 
-export const SECTIONS = ['templates', 'habits', 'goals', 'settings'] as const
+export const SECTIONS = ['templates', 'habits', 'goals', 'mealPlan', 'settings'] as const
 type Section = (typeof SECTIONS)[number]
 
 /** Settings that are per-device and never synced */
@@ -100,6 +100,7 @@ export function mergeData(local: AppData, remote: AppData): AppData {
     templates: pickSection('templates'),
     habits: pickSection('habits'),
     goals: pickSection('goals'),
+    mealPlan: pickSection('mealPlan'),
     settings: { ...settings, theme: local.settings.theme, demoLoaded: local.settings.demoLoaded },
     days: mergeMap<DayLog>(local.days, remote.days, 'day', tombstones),
     weeks: mergeMap<WeekLog>(local.weeks, remote.weeks, 'week', tombstones),

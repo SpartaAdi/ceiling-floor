@@ -1,10 +1,12 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import type { AppData, Block, BlockStatus, DayMode, FacetId, Goal, Habit, Reflection, Reminders, Targets, TemplateKey, Theme, WeekPriority, WeekReview } from '../types'
+import type { AppData, Block, BlockStatus, DayMode, FacetId, Goal, Habit, MealLog, MealPlan, Reflection, Reminders, Targets, TemplateKey, Theme, WeekPriority, WeekReview } from '../types'
 import { createDefaultData, defaultHabits, defaultTemplates } from '../data/defaults'
 import { storage } from '../services/storageService'
 import { templateFor, toKey, toMin, weekStartOf } from '../lib/time'
 import { applyDayMode, ensureDay, ensureSnapshot, resetDayLog, setDayPlan } from '../lib/dayLogic'
 import { periodFor } from '../lib/goals'
+import { syncEatRight } from '../lib/diet'
+import { defaultMealPlan } from '../data/defaults'
 import { mergeData, stampChanges } from '../sync/merge'
 import { withDemoData, withoutDemoData } from '../lib/demo'
 
@@ -49,6 +51,10 @@ interface Store {
   clearAll: () => void
   setReminders: (r: Reminders) => void
   setOnboardingDone: (done: boolean) => void
+  logMeal: (date: string, slotId: string, log: MealLog | undefined) => void
+  setWater: (date: string, glasses: number) => void
+  setMealPlan: (plan: MealPlan) => void
+  resetMealPlan: () => void
   /** Merge data that came from another device (sync only) */
   applyRemote: (d: AppData) => void
 }
@@ -270,6 +276,33 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       setTheme: (t) =>
         mutate((d) => {
           d.settings.theme = t
+        }),
+
+      logMeal: (date, slotId, log) =>
+        mutate((d) => {
+          const day = ensureDay(d, date)
+          const meals = (day.meals ??= {})
+          if (log) meals[slotId] = log
+          else delete meals[slotId]
+          day.updatedAt = Date.now()
+          syncEatRight(d, date)
+        }),
+
+      setWater: (date, glasses) =>
+        mutate((d) => {
+          const day = ensureDay(d, date)
+          day.water = Math.max(0, Math.min(30, glasses))
+          day.updatedAt = Date.now()
+        }),
+
+      setMealPlan: (plan) =>
+        mutate((d) => {
+          d.mealPlan = plan
+        }),
+
+      resetMealPlan: () =>
+        mutate((d) => {
+          d.mealPlan = defaultMealPlan()
         }),
 
       setOnboardingDone: (done) =>

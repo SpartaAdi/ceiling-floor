@@ -69,6 +69,7 @@ export function normalize(input: unknown): AppData {
     days: isObj(input.days) ? (input.days as AppData['days']) : {},
     weeks: isObj(input.weeks) ? (input.weeks as AppData['weeks']) : {},
     goals: Array.isArray(input.goals) ? (input.goals as AppData['goals']) : [],
+    mealPlan: isObj(input.mealPlan) && Array.isArray((input.mealPlan as { slots?: unknown }).slots) ? ({ ...base.mealPlan, ...(input.mealPlan as unknown as Partial<AppData['mealPlan']>) } as AppData['mealPlan']) : base.mealPlan,
     settings: {
       ...base.settings,
       ...(settingsIn as Partial<AppData['settings']>),

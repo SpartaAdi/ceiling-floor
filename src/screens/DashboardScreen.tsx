@@ -341,7 +341,7 @@ function FacetCard({
           ? stat.blockPct === null
             ? 'Nothing planned yet'
             : `${stat.blockPct}% of planned done • ${fmtH(target)}/wk goal`
-          : [stat.blockPct !== null && `Blocks ${stat.blockPct}%`, stat.habitPossible > 0 && `Habits ${stat.habitDone}/${stat.habitPossible}`]
+          : [stat.blockPct !== null && `${def.id === 'nutrition' ? 'Meals' : 'Blocks'} ${stat.blockPct}%`, stat.habitPossible > 0 && `Habits ${stat.habitDone}/${stat.habitPossible}`]
               .filter(Boolean)
               .join(' • ') || 'Nothing tracked yet'}
       </p>

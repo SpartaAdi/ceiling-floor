@@ -62,6 +62,10 @@ export interface DayLog {
   blocks: Block[]
   statuses: Record<string, BlockStatus>
   habits: Record<string, boolean>
+  /** Meal plan check-offs by slot id */
+  meals?: Record<string, MealLog>
+  /** Water glasses (250 ml) */
+  water?: number
   /** 1 (drained) – 5 (great) */
   energy?: number
   reflection?: Reflection
@@ -147,7 +151,7 @@ export interface Settings {
 /** Bookkeeping for cross-device sync (set automatically, never by hand). */
 export interface SyncMeta {
   /** Last-change time per whole section */
-  sections: Partial<Record<'templates' | 'habits' | 'goals' | 'settings', number>>
+  sections: Partial<Record<'templates' | 'habits' | 'goals' | 'settings' | 'mealPlan', number>>
   /** Deletion times, e.g. "day:2026-11-18" or "week:2026-11-16" */
   tombstones: Record<string, number>
 }
@@ -157,9 +161,49 @@ export interface Reminders {
   evening: string // HH:MM
 }
 
+/** One choice within a meal slot (no calories/grams by design: this is an adherence check). */
+export interface MealOption {
+  id: string
+  label: string
+  details?: string
+  /** Not part of the plan (e.g. "Something else") */
+  offPlan?: boolean
+  /** Counts against the weekly eating-out allowance */
+  eatingOut?: boolean
+  /** Planned light meal for after eating out */
+  afterEatingOut?: boolean
+}
+
+export interface MealSlot {
+  id: string
+  time: string // HH:MM
+  title: string
+  details?: string
+  options: MealOption[]
+  /** Optional extras ticked alongside, e.g. the nuts with the salad */
+  addOns?: { id: string; label: string }[]
+  /** Skipping or going off-plan here means Eat Right is not met */
+  main?: boolean
+}
+
+export interface MealPlan {
+  slots: MealSlot[]
+  /** Daily water target in 250 ml glasses */
+  waterGlasses: number
+  /** Eating-out / cheat meals allowed per week */
+  eatOutPerWeek: number
+}
+
+export interface MealLog {
+  status: 'done' | 'skipped'
+  optionId?: string
+  addOns?: string[]
+}
+
 export interface AppData {
   version: 2
   meta?: SyncMeta
+  mealPlan: MealPlan
   templates: Record<TemplateKey, Block[]>
   habits: Habit[]
   days: Record<string, DayLog>

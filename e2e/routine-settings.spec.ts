@@ -124,3 +124,28 @@ test('old v1 data migrates on load', async ({ page, errors: _ }) => {
   await expect(essentials(page).getByRole('button', { name: 'Eat Right' })).toBeVisible()
   await expect(timeline(page).locator('li', { hasText: 'Reading' })).toContainText('Reading')
 })
+
+test('meal plan editor: change options and water target, reset to chart', async ({ page, errors: _ }) => {
+  await openAt(page, '2026-11-18T15:00:00')
+  await nav(page, 'Routine').click()
+  await page.getByRole('tab', { name: 'Meals' }).click()
+  await expect(page.getByRole('button', { name: 'Saved' })).toBeDisabled()
+  await page.getByRole('button', { name: 'Increase Water target' }).click()
+  await expect(page.getByText('13 glasses × 250 ml = 3.25 L')).toBeVisible()
+  await page.locator('input[value="Classic thali"]').fill('Home thali')
+  await page.getByRole('button', { name: 'Save meal plan' }).click()
+  await expect(page.getByRole('status')).toContainText('Meal plan saved')
+
+  await nav(page, 'Today').click()
+  const diet = page.getByRole('region', { name: 'Diet' })
+  await expect(diet).toContainText('Water 0/13 glasses')
+  await diet.getByRole('button', { name: 'Choose Lunch' }).click()
+  await expect(page.getByRole('radiogroup', { name: 'Lunch options' }).getByRole('radio', { name: /Home thali/ })).toBeVisible()
+  await page.keyboard.press('Escape')
+
+  await nav(page, 'Routine').click()
+  await page.getByRole('tab', { name: 'Meals' }).click()
+  await page.getByRole('button', { name: 'Reset to my chart' }).click()
+  await page.getByRole('button', { name: 'Tap to confirm' }).click()
+  await expect(page.locator('input[value="Classic thali"]')).toBeVisible()
+})

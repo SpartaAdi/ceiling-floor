@@ -6,13 +6,15 @@ import { useStore } from '../store/AppStore'
 import { CATEGORIES, CATEGORY_META, TEMPLATE_LABELS } from '../data/defaults'
 import { durationLabel, fmt12, toMin } from '../lib/time'
 import { BottomSheet, Card, PageHeader, Time12, cx } from '../components/ui'
+import { MealsEditor } from '../components/MealsEditor'
 
-type RTab = TemplateKey | 'habits'
+type RTab = TemplateKey | 'habits' | 'meals'
 const TABS: { id: RTab; label: string }[] = [
   { id: 'weekday-ceiling', label: 'Weekday Ceiling' },
   { id: 'weekday-floor', label: 'Weekday Floor' },
   { id: 'weekend-ceiling', label: 'Weekend Ceiling' },
   { id: 'weekend-floor', label: 'Weekend Floor' },
+  { id: 'meals', label: 'Meals' },
   { id: 'habits', label: 'Habits' },
 ]
 
@@ -56,7 +58,7 @@ export function RoutineScreen() {
             </button>
           ))}
         </div>
-        {tab === 'habits' ? <HabitsEditor /> : <TemplateEditor tk={tab} />}
+        {tab === 'habits' ? <HabitsEditor /> : tab === 'meals' ? <MealsEditor /> : <TemplateEditor tk={tab} />}
       </div>
     </>
   )

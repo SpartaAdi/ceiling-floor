@@ -1,6 +1,7 @@
 import type { AppData, DayLog, DayMode, FacetId } from '../types'
 import { FACETS, FACET_BY_ID, GROWTH_FACETS, ADHERENCE_TARGET, blockMinutes, facetOfCategory, facetTargets, fmtH } from './facets'
 import { blockReport, effectiveStatus, weakest, type Timeframe } from './stats'
+import { dietAdherence } from './diet'
 import { DOW_SHORT, addDays, dowIndex, fromKey, toKey, weekDays, weekStartOf } from './time'
 
 /* ---------- Facet stats ---------- */
@@ -44,9 +45,12 @@ export function computeFacets(data: AppData, days: DayLog[]): Record<FacetId, Fa
     s.habitDone += trackedDays.filter((d) => d.habits[h.id]).length
   }
 
+  const diet = dietAdherence(data, days)
   for (const s of Object.values(out)) {
     s.hours = s.doneMin / 60
     s.blockPct = s.plannedMin ? Math.round((s.doneMin / s.plannedMin) * 100) : null
+    // Nutrition follows the meal plan when you log it (share of planned meals eaten as planned)
+    if (s.id === 'nutrition' && diet.pct !== null) s.blockPct = diet.pct
     s.habitPct = s.habitPossible ? Math.round((s.habitDone / s.habitPossible) * 100) : null
     const parts = [s.blockPct, s.habitPct].filter((x): x is number => x !== null)
     s.score = FACET_BY_ID[s.id].metric === 'hours' ? s.blockPct : parts.length ? Math.round(parts.reduce((a, b) => a + b) / parts.length) : null

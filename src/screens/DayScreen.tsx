@@ -13,6 +13,7 @@ import { Timeline } from '../components/Timeline'
 import { DayFacets, NowNext, ReflectionCard } from '../components/DayPanels'
 import { Card, Kbd, PageHeader, cx } from '../components/ui'
 import { Welcome } from '../components/Welcome'
+import { DietCard } from '../components/DietCard'
 import type { DayMode } from '../types'
 
 const isTyping = (e: KeyboardEvent) => {
@@ -201,6 +202,11 @@ export function DayScreen({
             </Card>
           )}
           </div>
+          {!future && (
+            <div id="diet-card" role="region" aria-label="Diet" className="order-6 scroll-mt-6 lg:order-none">
+              <DietCard date={date} now={now} live={isToday} />
+            </div>
+          )}
 
           <div className="order-7 empty:hidden lg:order-none">
           <DayFacets day={day} blocks={blocks} future={future} />

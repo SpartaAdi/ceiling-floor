@@ -213,7 +213,27 @@ export function ReviewScreen({ now, ws, setWs }: { now: Date; ws: string; setWs:
             </Card>
 
             <Card>
-              <CardTitle title="Habits" sub="Days kept this week" />
+              <CardTitle title="Habits & Diet" sub="Days kept this week" />
+              {r.diet.daysTracked > 0 && (
+                <div className="mb-3 grid grid-cols-3 gap-2 text-center">
+                  <div className="rounded-xl bg-slate-50 px-2 py-2 dark:bg-night">
+                    <p className="text-lg font-bold tabular-nums text-brand dark:text-white">{r.diet.pct}%</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Meals on plan</p>
+                  </div>
+                  <div className="rounded-xl bg-slate-50 px-2 py-2 dark:bg-night">
+                    <p className="text-lg font-bold tabular-nums text-brand dark:text-white">
+                      {r.diet.waterDays}/{r.diet.daysTracked}
+                    </p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Water days</p>
+                  </div>
+                  <div className={cx('rounded-xl px-2 py-2', r.diet.eatOuts > r.diet.allowance ? 'bg-miss/10' : 'bg-slate-50 dark:bg-night')}>
+                    <p className={cx('text-lg font-bold tabular-nums', r.diet.eatOuts > r.diet.allowance ? 'text-miss-ink' : 'text-brand dark:text-white')}>
+                      {r.diet.eatOuts}/{r.diet.allowance}
+                    </p>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Ate out</p>
+                  </div>
+                </div>
+              )}
               <ul className="flex flex-col gap-2.5">
                 {r.habits.map(({ habit, done, of }) => {
                   const pct = of ? Math.round((done / of) * 100) : 0

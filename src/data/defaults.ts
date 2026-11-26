@@ -1,4 +1,4 @@
-import type { AppData, Block, Category, Habit, Settings, TemplateKey } from '../types'
+import type { AppData, Block, Category, Habit, MealPlan, Settings, TemplateKey } from '../types'
 
 type Row = [start: string, end: string, title: string, details: string, category: Category]
 
@@ -93,6 +93,88 @@ export const defaultSettings = (): Settings => ({
   facetTargets: {},
 })
 
+/** From the user's Daily High-Protein Meal Cheat Sheet (labels only, no numbers by design). */
+export const defaultMealPlan = (): MealPlan => ({
+  waterGlasses: 12, // 3 L
+  eatOutPerWeek: 1,
+  slots: [
+    { id: 'jeera', time: '05:00', title: 'Jeera water', details: 'Jeera • Ajwain • Cinnamon', options: [{ id: 'jeera', label: 'Jeera-Ajwain-Cinnamon water' }] },
+    {
+      id: 'pregym',
+      time: '06:15',
+      title: 'Pre-gym',
+      details: 'Black coffee or ½ apple',
+      options: [
+        { id: 'coffee', label: 'Black coffee' },
+        { id: 'apple', label: '½ Apple' },
+      ],
+    },
+    {
+      id: 'shake',
+      time: '08:30',
+      title: 'Protein shake',
+      details: 'Whey • Milk • Chana • Date • PB • Nuts',
+      main: true,
+      options: [{ id: 'shake', label: 'Shake as planned', details: 'Whey + 200ml milk + 30g chana + 1 date + ½ tsp PB + nuts' }],
+    },
+    {
+      id: 'eggs',
+      time: '10:00',
+      title: 'Eggs',
+      details: '3 boiled • or light swap',
+      options: [
+        { id: 'boiled', label: '3 Boiled eggs' },
+        { id: 'swap', label: 'Light swap', details: '2 whole + 2 whites + ½ bowl poha/upma' },
+      ],
+    },
+    {
+      id: 'salad',
+      time: '12:00',
+      title: 'Salad & nuts',
+      details: 'Pick today\'s salad',
+      options: [
+        { id: 'classic', label: 'Beet • Cucumber • Tomato' },
+        { id: 'sprouts', label: 'Sprouts & Carrot' },
+        { id: 'spinach', label: 'Spinach & Amla' },
+        { id: 'pepper', label: 'Bell Pepper & Cabbage' },
+      ],
+      addOns: [{ id: 'nuts', label: '4 almonds + 1 walnut' }],
+    },
+    {
+      id: 'lunch',
+      time: '14:30',
+      title: 'Lunch',
+      details: 'Thali • Paneer • Chicken • Chilla',
+      main: true,
+      options: [
+        { id: 'thali', label: 'Classic thali', details: '1 roti + dal + sabzi + curd w/ flax' },
+        { id: 'paneer', label: 'High-protein veg', details: 'Dal + low-fat paneer + curd' },
+        { id: 'chicken', label: 'Chicken bowl', details: 'Roasted chicken + curd w/ flax' },
+        { id: 'chilla', label: 'Chilla plate', details: '2 moong/besan chillas + curd w/ flax' },
+        { id: 'out', label: 'Ate out', details: 'Tandoori chicken/tikka + 1–2 roti + dal', eatingOut: true },
+        { id: 'other', label: 'Something else', offPlan: true },
+      ],
+    },
+    {
+      id: 'dinner',
+      time: '18:00',
+      title: 'Dinner + veggies',
+      details: 'Chicken • Soya • Paneer • Eggs • Tofu',
+      main: true,
+      options: [
+        { id: 'chicken', label: 'Chicken + veggies', details: 'Roasted chicken breast' },
+        { id: 'soya', label: 'Soya chunks + veggies' },
+        { id: 'paneer', label: 'Paneer tikka + veggies', details: 'Low-fat paneer' },
+        { id: 'eggs', label: 'Egg bhurji + veggies', details: '1 whole + 4 whites' },
+        { id: 'tofu', label: 'Tofu + veggies', details: 'Roasted tofu' },
+        { id: 'light', label: 'Light dinner', details: 'Whey in water or hung curd • after eating out', afterEatingOut: true },
+        { id: 'cheat', label: 'Cheat meal', details: 'Weekend treat', eatingOut: true },
+        { id: 'other', label: 'Something else', offPlan: true },
+      ],
+    },
+  ],
+})
+
 export const createDefaultData = (): AppData => ({
   version: 2,
   templates: defaultTemplates(),
@@ -100,6 +182,7 @@ export const createDefaultData = (): AppData => ({
   days: {},
   weeks: {},
   goals: [],
+  mealPlan: defaultMealPlan(),
   settings: defaultSettings(),
 })
 

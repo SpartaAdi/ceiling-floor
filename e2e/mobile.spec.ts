@@ -128,3 +128,18 @@ test('Goals primary action sits in the thumb zone on the phone', async ({ page, 
   await fab.tap()
   await expect(page.getByRole('dialog', { name: 'New goal' })).toBeVisible()
 })
+
+test('diet on the phone: one tap to tick, picker sheet, water', async ({ page, errors: _ }) => {
+  await openAt(page, '2026-11-18T12:30:00')
+  const diet = page.getByRole('region', { name: 'Diet' })
+  await diet.getByRole('button', { name: 'Jeera water done' }).tap()
+  await diet.getByRole('button', { name: 'Choose Salad & nuts' }).tap()
+  const sheet = page.getByRole('dialog', { name: 'Salad & nuts' })
+  await sheet.getByRole('radio', { name: /Spinach & Amla/ }).tap()
+  await sheet.getByRole('button', { name: 'Save' }).tap()
+  await diet.getByRole('button', { name: 'Add a glass of water' }).tap()
+  await expect(diet).toContainText('2/7')
+  await expect(diet).toContainText('Water 1/12 glasses')
+  const w = await page.evaluate(() => document.documentElement.scrollWidth)
+  expect(w).toBeLessThanOrEqual(393)
+})
