@@ -101,7 +101,6 @@ describe('weekly review', () => {
     expect(r.toughest?.key).toBe(WED)
     expect(r.avgEnergy).toBe(3)
     expect(r.wins).toEqual([{ date: MON, text: 'Shipped' }])
-    expect(r.missReasons).toEqual(['Sick'])
     d.days[TUE].reflection = { grateful: 'Family dinner', bother: 'Late emails', why: 'They break my evening' }
     const r2 = weekReview(d, MON, THU)
     expect(r2.grateful).toEqual([{ date: TUE, text: 'Family dinner' }])

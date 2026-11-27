@@ -11,7 +11,7 @@ const log = (d: AppData, date: string, slot: string, l: MealLog) => {
   ;(d.days[date].meals ??= {})[slot] = l
 }
 const planDay = (d: AppData, date: string, overrides: Record<string, MealLog> = {}) => {
-  for (const s of d.mealPlan.slots) log(d, date, s.id, overrides[s.id] ?? { status: 'done', optionId: s.options[0].id })
+  for (const s of d.mealPlan.slots) log(d, date, s.id, overrides[s.id] ?? { status: 'done', optionIds: [s.options[0].id] })
 }
 const slot = (d: AppData, id: string) => d.mealPlan.slots.find((s) => s.id === id)!
 
@@ -23,7 +23,9 @@ describe('default plan from the chart', () => {
     expect(slot(fresh(), 'salad').addOns?.[0].label).toBe('4 almonds + 1 walnut')
     expect(p.waterGlasses).toBe(12)
     expect(p.eatOutPerWeek).toBe(1)
-    expect(JSON.stringify(p)).not.toMatch(/kcal|calorie|protein":/i)
+    // presets are made of foods (so quantities scale); no calorie numbers are stored in the plan
+    expect(JSON.stringify(p.slots)).not.toMatch(/kcal|calorie/i)
+    expect(p.slots.find((s) => s.id === 'eggs')!.options[0]).toMatchObject({ adjust: 'egg', items: [{ food: 'egg', qty: 3 }] })
   })
 })
 

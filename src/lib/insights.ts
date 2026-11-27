@@ -234,10 +234,6 @@ export function buildInsights(p: {
     }
   }
 
-  const reasons = days.filter((d) => d.mode === 'miss' && d.missReason).map((d) => d.missReason!)
-  const counts = reasons.reduce<Record<string, number>>((a, r) => ((a[r] = (a[r] ?? 0) + 1), a), {})
-  const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]
-  if (top && top[1] >= 2) out.push({ tone: 'info', title: `Top Miss trigger • ${top[0]}`, sub: `${top[1]} Miss days this period`, weight: 1 })
 
   return out.sort((a, b) => b.weight - a.weight)
 }

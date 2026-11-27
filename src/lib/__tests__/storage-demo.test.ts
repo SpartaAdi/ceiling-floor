@@ -22,7 +22,7 @@ describe('normalize + migration', () => {
     expect(d.version).toBe(2)
     expect(d.templates['weekday-ceiling'][0].category).toBe('learning')
     expect(d.days['2026-11-16'].blocks[0].category).toBe('learning')
-    expect(d.habits.map((h) => h.id)).toEqual(['meds', 'brush', 'eatright', 'besan'])
+    expect(d.habits.map((h) => h.id)).toEqual(['meds', 'brush', 'eatright', 'exercise', 'besan'])
     expect(d.habits[0].facet).toBe('health')
     expect(d.settings.targets).toEqual({ ceiling: 4, floor: 2, miss: 0 })
     expect(d.settings.theme).toBe('dark')

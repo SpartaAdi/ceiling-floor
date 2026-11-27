@@ -143,6 +143,8 @@ export interface Settings {
   facetTargets: Partial<Record<FacetId, number>>
   /** Daily reminder times (synced) */
   reminders?: Reminders
+  /** Default habits already offered once (so deleting one sticks) */
+  addedHabits?: string[]
   /** First-run checklist dismissed */
   onboardingDone?: boolean
   demoLoaded?: boolean
@@ -172,6 +174,10 @@ export interface MealOption {
   eatingOut?: boolean
   /** Planned light meal for after eating out */
   afterEatingOut?: boolean
+  /** What it's made of (food id + quantity in that food's unit) — used for estimates */
+  items?: { food: string; qty: number }[]
+  /** Food whose count the user adjusts directly (e.g. eggs: 2, 3, 4) */
+  adjust?: string
 }
 
 export interface MealSlot {
@@ -181,7 +187,7 @@ export interface MealSlot {
   details?: string
   options: MealOption[]
   /** Optional extras ticked alongside, e.g. the nuts with the salad */
-  addOns?: { id: string; label: string }[]
+  addOns?: { id: string; label: string; items?: { food: string; qty: number }[] }[]
   /** Skipping or going off-plan here means Eat Right is not met */
   main?: boolean
 }
@@ -192,12 +198,29 @@ export interface MealPlan {
   waterGlasses: number
   /** Eating-out / cheat meals allowed per week */
   eatOutPerWeek: number
+  /** Daily estimate targets (from the meal cheat sheet) */
+  targets?: { kcal: [number, number]; protein: [number, number]; carbs: [number, number]; fat: [number, number] }
+}
+
+export interface LoggedFood {
+  /** Food list id when recognised; otherwise just a note */
+  food?: string
+  name: string
+  qty: number
 }
 
 export interface MealLog {
   status: 'done' | 'skipped'
+  /** Selected plan options (multi-select) */
+  optionIds?: string[]
+  /** Older single-choice logs */
   optionId?: string
+  /** Per option: count of its adjustable food, or a serving multiplier */
+  servings?: Record<string, number>
   addOns?: string[]
+  /** Foods typed in your own words */
+  extras?: LoggedFood[]
+  text?: string
 }
 
 export interface AppData {

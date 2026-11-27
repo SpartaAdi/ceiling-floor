@@ -1,5 +1,7 @@
 import type { AppData, DayLog, MealLog, MealPlan, MealSlot } from '../types'
 import { weekDays, weekStartOf } from './time'
+import { selectedOptionIds } from './nutrition'
+import { effectiveStatus } from './stats'
 
 /**
  * Rough diet adherence — deliberately no calories or grams.
@@ -12,7 +14,17 @@ import { weekDays, weekStartOf } from './time'
  */
 export type MealState = 'on' | 'treat' | 'over' | 'off' | 'skipped' | 'open'
 
-export const optionOf = (slot: MealSlot, log?: MealLog) => (log?.optionId ? slot.options.find((o) => o.id === log.optionId) : undefined)
+/** Selected plan options (multi-select; older logs had a single optionId). */
+export const optionsOf = (slot: MealSlot, log?: MealLog) =>
+  selectedOptionIds(log)
+    .map((id) => slot.options.find((o) => o.id === id))
+    .filter((o): o is NonNullable<typeof o> => !!o)
+
+/** First selected option (kept for older call sites). */
+export const optionOf = (slot: MealSlot, log?: MealLog) => optionsOf(slot, log)[0]
+
+/** Foods that belong to this slot's plan (so typing "3 eggs" in the egg slot stays on plan). */
+const planFoods = (slot: MealSlot) => new Set(slot.options.filter((o) => !o.offPlan && !o.eatingOut).flatMap((o) => (o.items ?? []).map((i) => i.food)))
 
 /** Eating-out logs in a week, in time order: the first N fit the allowance. */
 export function eatOutsInWeek(data: AppData, ws: string) {
@@ -22,7 +34,7 @@ export function eatOutsInWeek(data: AppData, ws: string) {
     if (!meals) continue
     for (const slot of data.mealPlan.slots) {
       const log = meals[slot.id]
-      if (log?.status === 'done' && optionOf(slot, log)?.eatingOut) out.push({ date, slotId: slot.id })
+      if (log?.status === 'done' && optionsOf(slot, log).some((o) => o.eatingOut)) out.push({ date, slotId: slot.id })
     }
   }
   return out
@@ -32,11 +44,19 @@ export function mealState(data: AppData, date: string, slot: MealSlot, allowed?:
   const log = data.days[date]?.meals?.[slot.id]
   if (!log) return 'open'
   if (log.status === 'skipped') return 'skipped'
-  const opt = optionOf(slot, log)
-  if (opt?.offPlan) return 'off'
-  if (opt?.eatingOut) {
+  const opts = optionsOf(slot, log)
+  if (opts.some((o) => o.eatingOut)) {
     const ok = allowed ?? allowedEatOuts(data, date)
     return ok.has(`${date}|${slot.id}`) ? 'treat' : 'over'
+  }
+  if (opts.some((o) => o.offPlan)) return 'off'
+  const extras = log.extras ?? []
+  if (!opts.length) {
+    // Only typed foods: on plan when they're all foods this meal plans for
+    const pf = planFoods(slot)
+    const known = extras.filter((e) => e.food) // unrecognised notes don't decide
+    if (!known.length) return extras.length ? 'off' : 'on'
+    return known.every((e) => pf.has(e.food!)) ? 'on' : 'off'
   }
   return 'on'
 }
@@ -122,4 +142,12 @@ export function currentSlotId(plan: MealPlan, meals: Record<string, MealLog> | u
   const due = sorted.filter((s) => toMin(s.time) <= nowMinutes && !meals?.[s.id])
   if (due.length) return due[due.length - 1].id
   return sorted.find((s) => toMin(s.time) > nowMinutes)?.id
+}
+
+/** Auto "Exercise": done when any fitness block was ticked done that day. */
+export function syncExercise(data: AppData, date: string) {
+  if (!data.habits.some((h) => h.id === 'exercise')) return
+  const day = data.days[date]
+  if (!day?.blocks.length) return
+  day.habits.exercise = day.blocks.some((b) => b.category === 'fitness' && effectiveStatus(day, b.id) === 'completed')
 }

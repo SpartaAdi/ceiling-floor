@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowRight, CloudRain, Crosshair, Heart, HelpCircle, Lightbulb, Moon, Pencil, Sparkles, Sun } from 'lucide-react'
+import { ArrowRight, CloudRain, Crosshair, Heart, Lightbulb, Moon, Pencil, Sparkles, Sun } from 'lucide-react'
 import type { Block, DayLog, FacetId, Reflection } from '../types'
 import { HOUR_FACETS, blockMinutes, facetOfCategory, fmtH } from '../lib/facets'
 import { effectiveStatus } from '../lib/stats'
@@ -125,8 +125,7 @@ export const PROMPTS: { key: keyof Reflection; title: string; sub: string; place
   { key: 'win', title: 'Something positive today', sub: 'A win • A good moment', placeholder: 'What went well today, big or small…', Icon: Sun },
   { key: 'grateful', title: "I'm grateful for", sub: 'People • Things • Moments', placeholder: 'Today I am grateful for…', Icon: Heart },
   { key: 'lesson', title: 'Lesson to keep', sub: 'Something I learned today', placeholder: 'What I learned today and want to remember…', Icon: Lightbulb },
-  { key: 'bother', title: 'Something bothering me', sub: 'Name it • Let it out', placeholder: "What's been on my mind…", Icon: CloudRain },
-  { key: 'why', title: 'Why it bothers me', sub: 'The reason underneath', placeholder: 'It bothers me because…', Icon: HelpCircle },
+  { key: 'bother', title: "What's bothering me & why", sub: 'Name it • and the reason underneath', placeholder: "What's on my mind, and why it bothers me…", Icon: CloudRain },
   { key: 'focus', title: 'Focus for tomorrow', sub: 'The one thing that matters', placeholder: 'Tomorrow, the one thing I will do is…', Icon: Crosshair },
 ]
 
@@ -134,7 +133,9 @@ export const PROMPTS: { key: keyof Reflection; title: string; sub: string; place
 export function ReflectionCard({ date, day }: { date: string; day?: DayLog }) {
   const { setEnergy } = useStore()
   const [open, setOpen] = useState<keyof Reflection | null>(null)
-  const r: Reflection = day?.reflection ?? {}
+  const raw: Reflection = day?.reflection ?? {}
+  // Older entries kept bother + why apart: show them as one note
+  const r: Reflection = raw.why ? { ...raw, bother: [raw.bother, raw.why && `Why: ${raw.why}`].filter(Boolean).join('\n\n') } : raw
   const done = PROMPTS.filter((p) => r[p.key]).length
   const prompt = PROMPTS.find((p) => p.key === open)
   return (
@@ -232,6 +233,7 @@ function WriteDialog({
   const changed = text.trim() !== initial.trim()
   const save = () => {
     setReflection(date, prompt.key, text)
+    if (prompt.key === 'bother') setReflection(date, 'why', '') // merged into one field
     notify(text.trim() ? 'Saved' : 'Cleared')
     onClose()
   }

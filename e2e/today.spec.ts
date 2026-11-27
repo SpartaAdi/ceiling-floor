@@ -91,8 +91,7 @@ test('mode switching, block overrides and weekly counters', async ({ page, error
   // Miss with a reason
   await page.keyboard.press('m')
   await expect(page.getByText('Miss day • 0/14 blocks done')).toBeVisible()
-  await page.getByRole('button', { name: 'Sick' }).click()
-  await expect(page.getByRole('button', { name: 'Sick' })).toHaveClass(/bg-miss/)
+  await expect(page.getByText(/Miss reason/)).toHaveCount(0) // just Ceiling / Floor / Miss, no reason asked
   await expect(budget(page)).toContainText('Miss1')
 
   // Partial credit on a Miss day
@@ -147,8 +146,8 @@ test('Green → Amber week health with live forecast', async ({ page, errors: _ 
 test('check-in: prompts open a writing dialog, save long notes, feed tomorrow', async ({ page, errors: _ }) => {
   await openAt(page, '2026-11-18T22:10:00')
   const prompts = page.getByRole('list', { name: 'Reflection prompts' })
-  await expect(prompts.getByRole('button')).toHaveCount(6)
-  for (const t of ['Something positive today', "I'm grateful for", 'Lesson to keep', 'Something bothering me', 'Why it bothers me', 'Focus for tomorrow'])
+  await expect(prompts.getByRole('button')).toHaveCount(5)
+  for (const t of ['Something positive today', "I'm grateful for", 'Lesson to keep', "What's bothering me & why", 'Focus for tomorrow'])
     await expect(prompts.getByRole('button', { name: new RegExp(`^${t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`) })).toBeVisible()
 
   await page.getByRole('radio', { name: /^4/ }).click()
@@ -166,17 +165,17 @@ test('check-in: prompts open a writing dialog, save long notes, feed tomorrow', 
   await expect(prompts.getByRole('button', { name: /^Something positive today • written/ })).toContainText('Shipped the review page.')
 
   // Cancel discards edits
-  await prompts.getByRole('button', { name: /^Something bothering me/ }).click()
-  await page.getByRole('textbox', { name: 'Something bothering me' }).fill('should not save')
+  await prompts.getByRole('button', { name: /^What's bothering me & why/ }).click()
+  await page.getByRole('textbox', { name: "What's bothering me & why" }).fill('should not save')
   await page.getByRole('button', { name: 'Cancel' }).click()
-  await expect(prompts.getByRole('button', { name: /^Something bothering me/ })).toContainText('Click to write')
+  await expect(prompts.getByRole('button', { name: /^What's bothering me & why/ })).toContainText('Click to write')
 
   // ⌘+Enter saves
   await prompts.getByRole('button', { name: /^Focus for tomorrow/ }).click()
   await page.getByRole('textbox', { name: 'Focus for tomorrow' }).fill('Deep Block before noon')
   await page.keyboard.press('ControlOrMeta+Enter')
   await expect(page.getByRole('dialog')).toBeHidden()
-  await expect(page.getByText('3/6').or(page.getByText('2/6')).first()).toBeVisible()
+  await expect(page.getByText('2/5').first()).toBeVisible()
 
   // Persists in full after reload
   await page.reload()
@@ -295,69 +294,94 @@ test('keyboard shortcuts dialog and page keys', async ({ page, errors: _ }) => {
   }
 })
 
-test('diet: one-tap meals, picker with nuts, eating out allowance, water, auto Eat Right', async ({ page, errors: _ }) => {
+test('diet: multi-select, egg count, typed foods with quantities, estimates, eating out, water', async ({ page, errors: _ }) => {
   await openAt(page, '2026-11-18T21:30:00') // Wednesday night: every meal time has passed
   const diet = page.getByRole('region', { name: 'Diet' })
   const meals = diet.getByRole('list', { name: 'Meals' })
+  const sheet = (name: string) => page.getByRole('dialog', { name })
 
-  // single-option meals: one tap
   await meals.getByRole('button', { name: 'Jeera water done' }).click()
   await meals.getByRole('button', { name: 'Protein shake done' }).click()
-  await expect(meals.getByRole('button', { name: /^Jeera water • .* • On plan/ })).toBeVisible()
+  await expect(diet.getByRole('region', { name: "Today's estimate" })).toContainText('Protein')
 
-  // choice meal
   await meals.getByRole('button', { name: 'Choose Pre-gym' }).click()
-  await page.getByRole('radiogroup', { name: 'Pre-gym options' }).getByRole('radio', { name: /Black coffee/ }).click()
-  await expect(meals).toContainText('Black coffee')
+  await sheet('Pre-gym').getByRole('checkbox', { name: 'Black coffee' }).click()
+  await sheet('Pre-gym').getByRole('button', { name: 'Save' }).click()
 
-  // skip
-  await meals.getByRole('button', { name: 'Eggs skipped' }).click()
-  await expect(meals).toContainText('Skipped')
+  // Eggs: choose the count, and multi-select with the light swap
+  await meals.getByRole('button', { name: 'Choose Eggs' }).click()
+  const eggs = sheet('Eggs')
+  await eggs.getByRole('checkbox', { name: 'Boiled eggs' }).click()
+  await eggs.getByRole('button', { name: 'More eggs' }).click()
+  await expect(eggs).toContainText('4 eggs')
+  await eggs.getByRole('checkbox', { name: 'Light swap' }).click()
+  await eggs.getByRole('button', { name: 'Save' }).click()
+  await expect(meals).toContainText('4 eggs • Light swap')
 
-  // salad: pick which one; nuts pre-ticked
+  // Salad: several salads; nuts pre-ticked
   await meals.getByRole('button', { name: 'Choose Salad & nuts' }).click()
-  const salad = page.getByRole('dialog', { name: 'Salad & nuts' })
-  await salad.getByRole('radio', { name: /Sprouts & Carrot/ }).click()
+  const salad = sheet('Salad & nuts')
+  await salad.getByRole('checkbox', { name: 'Beet • Cucumber • Tomato' }).click()
+  await salad.getByRole('checkbox', { name: 'Spinach & Amla' }).click()
   await expect(salad.getByRole('button', { name: /4 almonds \+ 1 walnut/ })).toHaveAttribute('aria-pressed', 'true')
   await salad.getByRole('button', { name: 'Save' }).click()
-  await expect(meals).toContainText('Sprouts & Carrot • 4 almonds + 1 walnut')
+  await expect(meals).toContainText('Beet • Cucumber • Tomato • Spinach & Amla • 4 almonds + 1 walnut')
 
-  // lunch out → treat (within 1/week) → light dinner suggested
+  // Lunch: type it in your own words, adjust a quantity, unknown word is flagged
   await meals.getByRole('button', { name: 'Choose Lunch' }).click()
-  await page.getByRole('radiogroup', { name: 'Lunch options' }).getByRole('radio', { name: /Ate out/ }).click()
-  await expect(meals).toContainText('Treat')
-  await expect(meals).toContainText('Ate out earlier • Light dinner suggested')
-  await meals.getByRole('button', { name: 'Choose Dinner + veggies' }).click()
-  const dinner = page.getByRole('radiogroup', { name: 'Dinner + veggies options' })
-  await expect(dinner.getByRole('radio', { name: /Light dinner/ })).toContainText('Suggested')
-  await dinner.getByRole('radio', { name: /Light dinner/ }).click()
+  const lunch = sheet('Lunch')
+  await lunch.getByRole('textbox', { name: 'What else did you have' }).fill('2 roti, half katori dal, some dahi, zzqx')
+  await expect(lunch).toContainText('Detected: 2 rotis roti • ½ katori dal • 1 katori curd • "zzqx"?')
+  await lunch.getByRole('button', { name: 'Add' }).click()
+  const added = lunch.getByRole('list', { name: 'Added foods' })
+  await expect(added.getByRole('listitem')).toHaveCount(3)
+  await added.getByRole('radiogroup', { name: 'Dal quantity' }).getByRole('radio', { name: '1 katori' }).click()
+  await expect(lunch).toContainText('Not sure what “zzqx” is')
+  await lunch.getByRole('button', { name: 'Save' }).click()
+  await expect(meals).toContainText('2 rotis • 1 katori dal • 1 katori curd')
 
-  // score + automatic Eat Right (one small skip is fine)
-  await expect(diet).toContainText('6/7')
+  await meals.getByRole('button', { name: 'Choose Dinner + veggies' }).click()
+  await sheet('Dinner + veggies').getByRole('checkbox', { name: 'Chicken + veggies' }).click()
+  await sheet('Dinner + veggies').getByRole('button', { name: 'Save' }).click()
+
+  await expect(diet).toContainText('7/7')
   await expect(diet).toContainText('Eat Right • auto')
-  await expect(diet).toContainText('Eating out 1/1 this week')
   await expect(essentials(page).getByRole('button', { name: /Eat Right/ })).toHaveAttribute('aria-pressed', 'true')
+  const estimate = diet.getByRole('region', { name: "Today's estimate" })
+  await expect(estimate).toContainText('Calories')
+  await expect(estimate).toContainText(/to go|On target|over/)
 
   // water
   await diet.getByRole('button', { name: 'Add a glass of water' }).click()
   await diet.getByRole('button', { name: 'Add a glass of water' }).click()
   await expect(diet).toContainText('Water 2/12 glasses')
-  await expect(diet).toContainText('0.5 L of 3 L • 10 to go')
 
-  // persists
   await page.reload()
-  await expect(diet).toContainText('6/7')
+  await expect(diet).toContainText('7/7')
 
-  // an earlier cheat meal (Tuesday) uses the allowance → Wednesday's lunch goes over
+  // Eating out: Tuesday cheat uses the 1/week allowance → a Wednesday cheat goes over
   await page.keyboard.press('ArrowLeft')
   await diet.getByRole('list', { name: 'Meals' }).getByRole('button', { name: 'Choose Dinner + veggies' }).click()
-  await page.getByRole('radiogroup', { name: 'Dinner + veggies options' }).getByRole('radio', { name: /Cheat meal/ }).click()
+  await sheet('Dinner + veggies').getByRole('checkbox', { name: 'Cheat meal' }).click()
+  await sheet('Dinner + veggies').getByRole('button', { name: 'Save' }).click()
   await page.keyboard.press('t')
+  await meals.getByRole('button', { name: /^Dinner \+ veggies/ }).click()
+  await sheet('Dinner + veggies').getByRole('checkbox', { name: 'Cheat meal' }).click()
+  await sheet('Dinner + veggies').getByRole('button', { name: 'Save' }).click()
   await expect(diet).toContainText('Over allowance')
   await expect(diet).toContainText('+1 over')
   await expect(essentials(page).getByRole('button', { name: /Eat Right/ })).toHaveAttribute('aria-pressed', 'false')
 
-  // future days don't show the diet card
   await page.keyboard.press('ArrowRight')
   await expect(page.getByRole('region', { name: 'Diet' })).toHaveCount(0)
+})
+
+test('Exercise ticks itself from fitness blocks', async ({ page, errors: _ }) => {
+  await openAt(page, '2026-11-18T21:00:00')
+  const ex = essentials(page).getByRole('button', { name: /Exercise/ })
+  await expect(ex).toHaveAttribute('aria-pressed', 'false')
+  await page.keyboard.press('c')
+  await expect(ex).toHaveAttribute('aria-pressed', 'true')
+  for (const t of ['Gym Prep', 'Gym', 'Cardio & Dinner']) await timeline(page).getByRole('button', { name: `${t} missed` }).click()
+  await expect(ex).toHaveAttribute('aria-pressed', 'false')
 })

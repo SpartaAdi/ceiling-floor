@@ -203,12 +203,6 @@ export function ReviewScreen({ now, ws, setWs }: { now: Date; ws: string; setWs:
                     </p>
                   </div>
                 )}
-                {r.missReasons.length > 0 && (
-                  <div>
-                    <Label>Miss reasons</Label>
-                    <p className="text-sm text-brand dark:text-white">{r.missReasons.join(' • ')}</p>
-                  </div>
-                )}
               </div>
             </Card>
 

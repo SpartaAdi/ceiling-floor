@@ -5,7 +5,7 @@ import { storage } from '../services/storageService'
 import { templateFor, toKey, toMin, weekStartOf } from '../lib/time'
 import { applyDayMode, ensureDay, ensureSnapshot, resetDayLog, setDayPlan } from '../lib/dayLogic'
 import { periodFor } from '../lib/goals'
-import { syncEatRight } from '../lib/diet'
+import { syncEatRight, syncExercise } from '../lib/diet'
 import { defaultMealPlan } from '../data/defaults'
 import { mergeData, stampChanges } from '../sync/merge'
 import { withDemoData, withoutDemoData } from '../lib/demo'
@@ -120,7 +120,11 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       notify,
       previewBlocks,
 
-      setDayMode: (date, mode) => mutate((d) => applyDayMode(d, date, mode)),
+      setDayMode: (date, mode) =>
+        mutate((d) => {
+          applyDayMode(d, date, mode)
+          syncExercise(d, date)
+        }),
 
       resetDay: (date) => mutate((d) => resetDayLog(d, date)),
 
@@ -131,6 +135,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
           const day = ensureSnapshot(d, date)
           day.statuses[blockId] = status
           day.updatedAt = Date.now()
+          syncExercise(d, date)
         }),
 
       toggleBlock: (date, blockId) =>
@@ -139,6 +144,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
           const cur = day.statuses[blockId]
           day.statuses[blockId] = cur === 'completed' ? 'missed' : 'completed'
           day.updatedAt = Date.now()
+          syncExercise(d, date)
         }),
 
       clearBlockStatus: (date, blockId) =>
@@ -147,6 +153,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
           if (!day) return
           delete day.statuses[blockId]
           day.updatedAt = Date.now()
+          syncExercise(d, date)
         }),
 
       setEnergy: (date, energy) =>

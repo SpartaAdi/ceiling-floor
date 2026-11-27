@@ -1,5 +1,5 @@
 import type { AppData, Block, TemplateKey } from '../types'
-import { createDefaultData } from '../data/defaults'
+import { createDefaultData, upgradeMealPlan } from '../data/defaults'
 
 /**
  * Storage adapter contract. Async on purpose so a remote backend
@@ -69,12 +69,13 @@ export function normalize(input: unknown): AppData {
     days: isObj(input.days) ? (input.days as AppData['days']) : {},
     weeks: isObj(input.weeks) ? (input.weeks as AppData['weeks']) : {},
     goals: Array.isArray(input.goals) ? (input.goals as AppData['goals']) : [],
-    mealPlan: isObj(input.mealPlan) && Array.isArray((input.mealPlan as { slots?: unknown }).slots) ? ({ ...base.mealPlan, ...(input.mealPlan as unknown as Partial<AppData['mealPlan']>) } as AppData['mealPlan']) : base.mealPlan,
+    mealPlan: isObj(input.mealPlan) && Array.isArray((input.mealPlan as { slots?: unknown }).slots) ? upgradeMealPlan({ ...base.mealPlan, ...(input.mealPlan as unknown as Partial<AppData['mealPlan']>) } as AppData['mealPlan']) : base.mealPlan,
     settings: {
       ...base.settings,
       ...(settingsIn as Partial<AppData['settings']>),
       targets: { ...base.settings.targets, ...(targetsIn as Partial<AppData['settings']['targets']>) },
       facetTargets: isObj(settingsIn.facetTargets) ? (settingsIn.facetTargets as AppData['settings']['facetTargets']) : {},
+      addedHabits: Array.isArray(settingsIn.addedHabits) ? (settingsIn.addedHabits as string[]) : [],
     },
   }
   if (isObj(input.meta)) {
@@ -82,6 +83,17 @@ export function normalize(input: unknown): AppData {
     out.meta = { sections: isObj(m.sections) ? m.sections : {}, tombstones: isObj(m.tombstones) ? (m.tombstones as Record<string, number>) : {} }
   }
   if (input.version !== 2) migrateToV2(out)
+  // Newer default habits appear once for existing users (deleting them afterwards sticks)
+  for (const id of ['exercise']) {
+    const added = out.settings.addedHabits ?? []
+    if (added.includes(id)) continue
+    if (!out.habits.some((h) => h.id === id)) {
+      const def = createDefaultData().habits.find((h) => h.id === id)!
+      const at = out.habits.findIndex((h) => h.id === 'eatright')
+      out.habits.splice(at >= 0 ? at + 1 : out.habits.filter((h) => h.kind === 'daily').length, 0, def)
+    }
+    out.settings.addedHabits = [...added, id]
+  }
   return out
 }
 

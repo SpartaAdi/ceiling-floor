@@ -1,6 +1,6 @@
 import type { AppData, BlockStatus, DayLog, DayMode, Goal } from '../types'
 import { addDays, fromKey, templateFor, weekStartOf } from './time'
-import { syncEatRight } from './diet'
+import { syncEatRight, syncExercise } from './diet'
 
 export const DEMO_DAYS = 42
 
@@ -66,7 +66,7 @@ export function withDemoData(data: AppData, todayKey: string): AppData {
       let opt = planned[Math.floor(rand() * planned.length)] ?? slot.options[0]
       if (slot.id === 'lunch' && fromKey(key).getDay() === 6) opt = slot.options.find((o) => o.eatingOut) ?? opt
       if (rand() < 0.05) opt = slot.options.find((o) => o.offPlan) ?? opt
-      meals[slot.id] = { status: 'done', optionId: opt.id, ...(slot.addOns ? { addOns: rand() < 0.8 ? slot.addOns.map((x) => x.id) : [] } : {}) }
+      meals[slot.id] = { status: 'done', optionIds: [opt.id], ...(slot.addOns ? { addOns: rand() < 0.8 ? slot.addOns.map((x) => x.id) : [] } : {}) }
     }
     const water = Math.max(4, Math.min(14, Math.round(9 + rand() * 5 - (mode === 'miss' ? 3 : 0))))
 
@@ -85,7 +85,6 @@ export function withDemoData(data: AppData, todayKey: string): AppData {
       updatedAt: fromKey(key).getTime(),
       demo: true,
       ...(rand() < 0.6 ? { reflection: { win: pick(WINS), lesson: rand() < 0.5 ? pick(LESSONS) : undefined, focus: pick(FOCUS) } } : {}),
-      ...(mode === 'miss' ? { missReason: pick(MISS_REASONS) } : {}),
     }
     next.days[key] = day
 
@@ -131,6 +130,7 @@ export function withDemoData(data: AppData, todayKey: string): AppData {
     demo: true,
   }
 
+  for (let i = DEMO_DAYS; i >= 1; i--) syncExercise(next, addDays(todayKey, -i))
   // Eat Right follows the logged meals (same rule as the app)
   for (let i = DEMO_DAYS; i >= 1; i -= 7) syncEatRight(next, addDays(todayKey, -i))
   syncEatRight(next, addDays(todayKey, -1))

@@ -6,7 +6,7 @@ import { addDays, dayTypeOf, fmtTime, fromKey, toKey, weekStartOf } from '../lib
 import { summarizeWeek } from '../lib/stats'
 import { TEMPLATE_LABELS } from '../data/defaults'
 import { WeekBar } from '../components/WeekBar'
-import { ModeTiles, MissReason } from '../components/DayControls'
+import { ModeTiles } from '../components/DayControls'
 import { CareStrip, EssentialsStrip } from '../components/HabitStrips'
 import { CatchUpCard } from '../components/CatchUpCard'
 import { Timeline } from '../components/Timeline'
@@ -181,7 +181,6 @@ export function DayScreen({
               </span>
             </div>
             <ModeTiles date={date} day={day} future={future} />
-            {!future && <MissReason date={date} day={day} />}
           </Card>
           </div>
 

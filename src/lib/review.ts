@@ -67,7 +67,6 @@ export function weekReview(data: AppData, ws: string, today: string) {
       const w = d.reflection?.why
       return b ? (w ? `${b} — because ${w}` : b) : undefined
     }),
-    missReasons: days.filter((d) => d.mode === 'miss').map((d) => d.missReason ?? 'No reason'),
     logged: days.filter((d) => d.mode).length,
   }
 }

@@ -58,7 +58,7 @@ test('habits editor: add habit linked to an area; appears on Today', async ({ pa
   await nav(page, 'Today').click()
   await essentials(page).getByRole('button', { name: 'Water' }).click()
   await expect(essentials(page).getByRole('button', { name: 'Water' })).toHaveAttribute('aria-pressed', 'true')
-  await expect(essentials(page).locator('..')).toContainText('1/6')
+  await expect(essentials(page).locator('..')).toContainText('1/7')
 })
 
 test('settings: budget targets, facet targets, theme', async ({ page, errors: _ }) => {
@@ -140,7 +140,7 @@ test('meal plan editor: change options and water target, reset to chart', async 
   const diet = page.getByRole('region', { name: 'Diet' })
   await expect(diet).toContainText('Water 0/13 glasses')
   await diet.getByRole('button', { name: 'Choose Lunch' }).click()
-  await expect(page.getByRole('radiogroup', { name: 'Lunch options' }).getByRole('radio', { name: /Home thali/ })).toBeVisible()
+  await expect(page.getByRole('group', { name: 'Lunch options' }).getByRole('checkbox', { name: /Home thali/ })).toBeVisible()
   await page.keyboard.press('Escape')
 
   await nav(page, 'Routine').click()

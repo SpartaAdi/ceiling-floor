@@ -62,7 +62,7 @@ export function EssentialsStrip({ date, now, live }: { date: string; now: Date; 
       </div>
       <div role="group" aria-label="Daily essentials" className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {habits.map((h) => (
-          <HabitPill key={h.id} label={h.label} done={!!day?.habits[h.id]} nudge={nudged(h)} sub={h.id === 'eatright' && day?.meals && Object.keys(day.meals).length ? 'auto' : undefined} onToggle={() => toggleHabit(date, h.id)} />
+          <HabitPill key={h.id} label={h.label} done={!!day?.habits[h.id]} nudge={nudged(h)} sub={(h.id === 'eatright' && day?.meals && Object.keys(day.meals).length) || (h.id === 'exercise' && day?.blocks.length) ? 'auto' : undefined} onToggle={() => toggleHabit(date, h.id)} />
         ))}
       </div>
     </div>

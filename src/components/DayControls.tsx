@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { ArrowDownToLine, ArrowUpToLine, CalendarClock, Check, CircleSlash, RotateCcw } from 'lucide-react'
 import type { DayLog, DayMode } from '../types'
 import { blockScore } from '../lib/stats'
@@ -39,7 +38,6 @@ const TILES: Record<
   },
 }
 
-const REASONS = ['Sick', 'Travel', 'Late night', 'Low energy', 'Work crunch']
 
 export function ModeTiles({ date, day, future = false, showKeys = true }: { date: string; day?: DayLog; future?: boolean; showKeys?: boolean }) {
   const { data, setDayMode, resetDay, setPlan } = useStore()
@@ -120,51 +118,6 @@ export function ModeTiles({ date, day, future = false, showKeys = true }: { date
           </button>
         )}
       </div>
-    </div>
-  )
-}
-
-export function MissReason({ date, day }: { date: string; day?: DayLog }) {
-  const { setMissReason } = useStore()
-  const [custom, setCustom] = useState('')
-  if (day?.mode !== 'miss') return null
-  const current = day.missReason
-  return (
-    <div className="mt-3 rounded-xl bg-miss/5 p-3">
-      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-miss-ink">Miss reason • optional</p>
-      <div className="flex flex-wrap gap-1.5">
-        {REASONS.map((r) => (
-          <button
-            key={r}
-            onClick={() => setMissReason(date, current === r ? '' : r)}
-            className={cx(
-              'min-h-11 rounded-full border px-3 text-xs font-semibold transition-colors',
-              current === r
-                ? 'border-miss-solid bg-miss-solid text-white'
-                : 'border-slate-200 bg-white text-slate-600 hover:border-miss/50 dark:border-night-line dark:bg-night-card dark:text-slate-300',
-            )}
-          >
-            {r}
-          </button>
-        ))}
-      </div>
-      <form
-        className="mt-2 flex gap-2"
-        onSubmit={(e) => {
-          e.preventDefault()
-          if (custom.trim()) setMissReason(date, custom.trim())
-          setCustom('')
-        }}
-      >
-        <input
-          value={custom}
-          onChange={(e) => setCustom(e.target.value)}
-          maxLength={40}
-          placeholder={current && !REASONS.includes(current) ? current : 'Own reason…'}
-          className="min-h-11 flex-1 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-brand dark:border-night-line dark:bg-night dark:focus:border-accent"
-        />
-        <button className="min-h-11 rounded-xl bg-brand px-4 text-sm font-semibold text-white dark:bg-accent dark:text-brand">Save</button>
-      </form>
     </div>
   )
 }

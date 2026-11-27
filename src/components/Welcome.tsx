@@ -3,6 +3,9 @@ import { useStore } from '../store/AppStore'
 import { useNav } from '../nav'
 import { cx } from './ui'
 
+/** Ticked by the app itself, so they don't count as the user ticking a habit */
+const AUTO_HABITS = new Set(['eatright', 'exercise'])
+
 const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
 
 /**
@@ -19,7 +22,7 @@ export function Welcome({ today }: { today: string }) {
   const steps = [
     { label: 'App ready', sub: 'Your Ceiling & Floor plans are loaded', done: true, go: () => {} },
     { label: "Pick today's mode", sub: 'Ceiling, Floor or Miss • Ticks your blocks', done: !!day?.mode, go: () => scrollTo('mode-card') },
-    { label: 'Tick your habits', sub: 'Meds • Triphala • Eat Right…', done: !!day && Object.values(day.habits).some(Boolean), go: () => scrollTo('habits-card') },
+    { label: 'Tick your habits', sub: 'Meds • Triphala • Eat Right…', done: !!day && Object.entries(day.habits).some(([id, v]) => v && !AUTO_HABITS.has(id)), go: () => scrollTo('habits-card') },
     { label: 'Write a check-in', sub: 'One positive thing about today', done: Object.values(data.days).some((d) => Object.values(d.reflection ?? {}).some(Boolean)), go: () => scrollTo('checkin-card') },
     { label: 'Set your first goal', sub: 'e.g. Deep work 20h a week', done: data.goals.length > 0, go: () => go('goals') },
   ]
