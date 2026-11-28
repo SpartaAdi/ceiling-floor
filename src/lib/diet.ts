@@ -1,6 +1,6 @@
 import type { AppData, DayLog, MealLog, MealPlan, MealSlot } from '../types'
-import { weekDays, weekStartOf } from './time'
-import { selectedOptionIds } from './nutrition'
+import { toKey, weekDays, weekStartOf } from './time'
+import { foodN, selectedOptionIds } from './nutrition'
 import { effectiveStatus } from './stats'
 
 /**
@@ -10,7 +10,7 @@ import { effectiveStatus } from './stats'
  *  over    eating out beyond the allowance (off plan)
  *  off     "Something else"
  *  skipped didn't have it
- *  open    not logged yet
+ *  open    not logged yet (today/future only — on past days an unlogged meal counts as skipped)
  */
 export type MealState = 'on' | 'treat' | 'over' | 'off' | 'skipped' | 'open'
 
@@ -42,7 +42,7 @@ export function eatOutsInWeek(data: AppData, ws: string) {
 
 export function mealState(data: AppData, date: string, slot: MealSlot, allowed?: Set<string>): MealState {
   const log = data.days[date]?.meals?.[slot.id]
-  if (!log) return 'open'
+  if (!log) return date < toKey(new Date()) && hasDietLog(data, date) ? 'skipped' : 'open'
   if (log.status === 'skipped') return 'skipped'
   const opts = optionsOf(slot, log)
   if (opts.some((o) => o.eatingOut)) {
@@ -61,6 +61,34 @@ export function mealState(data: AppData, date: string, slot: MealSlot, allowed?:
   return 'on'
 }
 
+/** Diet tracking started on or before this day (so unlogged meals then count as skipped). */
+export function hasDietLog(data: AppData, date: string) {
+  const start = dietStart(data)
+  return !!start && date >= start
+}
+let startCache: { days: AppData['days']; start?: string } | null = null
+/** First day anything diet-related was logged. */
+export function dietStart(data: AppData) {
+  if (startCache?.days === data.days) return startCache.start
+  let start: string | undefined
+  for (const [k, d] of Object.entries(data.days)) {
+    if ((d.meals && Object.keys(d.meals).length) || d.foodLog?.length) if (!start || k < start) start = k
+  }
+  startCache = { days: data.days, start }
+  return start
+}
+
+/** All foods any planned option uses — logging one of these is never "off plan". */
+export function allPlanFoods(data: AppData) {
+  return new Set(data.mealPlan.slots.flatMap((s) => s.options.filter((o) => !o.offPlan && !o.eatingOut).flatMap((o) => (o.items ?? []).map((i) => i.food))))
+}
+
+/** Food-log entries that break the plan: not a planned food and more than a nibble (> 100 kcal). */
+export function offPlanEntries(data: AppData, date: string) {
+  const plan = allPlanFoods(data)
+  return (data.days[date]?.foodLog ?? []).filter((e) => !(e.food && plan.has(e.food)) && foodN(e.food, e.qty).kcal > 100)
+}
+
 /** Keys ("date|slot") of eating-out meals that fit within the week's allowance. */
 export function allowedEatOuts(data: AppData, date: string) {
   const list = eatOutsInWeek(data, weekStartOf(date))
@@ -77,6 +105,8 @@ export interface DaySummary {
   /** null until something is logged */
   eatRight: boolean | null
   ateOutToday: boolean
+  /** Off-plan food-log entries that day */
+  extrasOff: number
   water: number
   waterTarget: number
 }
@@ -92,6 +122,8 @@ export function daySummary(data: AppData, date: string): DaySummary {
   const mainOk = states.filter((x) => x.slot.main).every((x) => good(x.state))
   const smallMisses = states.filter((x) => !x.slot.main && !good(x.state) && x.state !== 'open').length
   const day = data.days[date]
+  const extrasOff = offPlanEntries(data, date).length
+  const anything = logged > 0 || (day?.foodLog?.length ?? 0) > 0
   return {
     total: plan.slots.length,
     logged,
@@ -99,7 +131,8 @@ export function daySummary(data: AppData, date: string): DaySummary {
     missed,
     open: plan.slots.length - logged,
     pct: logged ? Math.round((onPlan / plan.slots.length) * 100) : null,
-    eatRight: logged ? mainOk && smallMisses <= 1 : null,
+    eatRight: anything ? mainOk && smallMisses <= 1 && extrasOff === 0 : null,
+    extrasOff,
     ateOutToday: states.some((x) => x.state === 'treat' || x.state === 'over'),
     water: day?.water ?? 0,
     waterTarget: plan.waterGlasses,
@@ -113,8 +146,11 @@ export function dietAdherence(data: AppData, days: DayLog[]) {
   let daysTracked = 0
   let eatRightDays = 0
   let waterDays = 0
+  const today = toKey(new Date())
   for (const d of days) {
-    if (!d.meals || !Object.keys(d.meals).length) continue
+    // Every day since you started tracking counts (unlogged = skipped); today only once something is logged
+    const tracked = d.date < today ? hasDietLog(data, d.date) : !!((d.meals && Object.keys(d.meals).length) || d.foodLog?.length)
+    if (!tracked) continue
     const s = daySummary(data, d.date)
     daysTracked++
     on += s.onPlan
@@ -130,7 +166,7 @@ export function syncEatRight(data: AppData, date: string) {
   if (!data.habits.some((h) => h.id === 'eatright')) return
   for (const k of weekDays(weekStartOf(date))) {
     const day = data.days[k]
-    if (!day?.meals || !Object.keys(day.meals).length) continue
+    if (!day || !((day.meals && Object.keys(day.meals).length) || day.foodLog?.length)) continue
     day.habits.eatright = daySummary(data, k).eatRight === true
   }
 }

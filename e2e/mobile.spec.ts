@@ -63,9 +63,11 @@ test('Today on the phone: what matters first, logging works with touch', async (
   await expect(tiles.locator('kbd').first()).toBeHidden()
 
   await modeTile(page, 'Ceiling').tap()
-  await expect(page.getByText('Ceiling day • 14/14 blocks done')).toBeVisible()
+  await expect(page.getByText('Ceiling day • 0/14 blocks done')).toBeVisible()
+  await timeline(page).getByRole('button', { name: 'Reading done' }).tap()
+  await expect(page.getByText('Ceiling day • 1/14 blocks done')).toBeVisible()
   await timeline(page).getByRole('button', { name: 'Reading missed' }).tap()
-  await expect(page.getByText('Ceiling day • 13/14 blocks done')).toBeVisible()
+  await expect(page.getByText('Ceiling day • 0/14 blocks done')).toBeVisible()
   await expect(budget(page)).toContainText('1/5')
 })
 
@@ -143,4 +145,17 @@ test('diet on the phone: one tap to tick, picker sheet, water', async ({ page, e
   await expect(diet).toContainText('Water 1/12 glasses')
   const w = await page.evaluate(() => document.documentElement.scrollWidth)
   expect(w).toBeLessThanOrEqual(393)
+})
+
+test('Today on the phone: sticky jump bar glides to each section and follows your scroll', async ({ page, errors: _ }) => {
+  await openAt(page, '2026-11-18T12:00:00')
+  const bar = page.getByRole('navigation', { name: 'Jump to' })
+  await expect(bar).toBeVisible()
+  await expect(bar.getByRole('button', { name: 'Plan' })).toHaveAttribute('aria-current', 'true')
+  await bar.getByRole('button', { name: 'Diet' }).tap()
+  await expect(page.getByRole('region', { name: 'Diet' })).toBeInViewport()
+  await expect(bar).toBeInViewport() // stays pinned while scrolled
+  await expect(bar.getByRole('button', { name: 'Diet' })).toHaveAttribute('aria-current', 'true')
+  await bar.getByRole('button', { name: 'Timeline' }).tap()
+  await expect(timeline(page)).toBeInViewport()
 })

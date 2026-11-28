@@ -4,15 +4,19 @@ import { applyDayMode, ensureDay } from '../dayLogic'
 
 export const fresh = (): AppData => createDefaultData()
 
-/** Log a day with a mode, optional per-block overrides (by title) and habits. */
+/**
+ * Log a day the way a user would: pick a mode, tick the blocks (all ✓ unless
+ * `untick`), then any per-block overrides (by title) and habits.
+ */
 export function logDay(
   d: AppData,
   date: string,
   mode: DayMode,
-  opts: { set?: Record<string, BlockStatus>; habits?: string[]; energy?: number; win?: string; reason?: string } = {},
+  opts: { set?: Record<string, BlockStatus>; habits?: string[]; energy?: number; win?: string; reason?: string; untick?: boolean } = {},
 ) {
   applyDayMode(d, date, mode)
   const day = d.days[date]
+  if (mode !== 'miss' && !opts.untick) for (const b of day.blocks) day.statuses[b.id] = 'completed'
   for (const [title, st] of Object.entries(opts.set ?? {})) {
     const b = day.blocks.find((x) => x.title === title)
     if (!b) throw new Error(`No block "${title}" on ${date}`)

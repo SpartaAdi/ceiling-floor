@@ -18,9 +18,10 @@ export function ensureSnapshot(d: AppData, date: string): DayLog {
 }
 
 /**
- * Set a day mode: snapshot that mode's template and auto-tick every block
- * (✓ for Ceiling/Floor, ✕ for Miss). Catch-up logs made before any mode was
- * picked are kept when they were made against the same template.
+ * Set a day mode: snapshot that mode's template. Blocks start unticked
+ * (not done until you tick them — or use "All ✓"); a Miss day marks them ✕.
+ * Ticks made before any mode was picked are kept when they were made
+ * against the same template.
  */
 export function applyDayMode(d: AppData, date: string, mode: DayMode) {
   const day = ensureDay(d, date)
@@ -29,8 +30,11 @@ export function applyDayMode(d: AppData, date: string, mode: DayMode) {
   day.blocks = structuredClone(d.templates[tk])
   day.template = tk
   day.mode = mode
-  const fill: BlockStatus = mode === 'miss' ? 'missed' : 'completed'
-  day.statuses = Object.fromEntries(day.blocks.map((b) => [b.id, keep[b.id] ?? fill]))
+  day.statuses = {}
+  for (const b of day.blocks) {
+    const s: BlockStatus | undefined = keep[b.id] ?? (mode === 'miss' ? 'missed' : undefined)
+    if (s) day.statuses[b.id] = s
+  }
   if (mode !== 'miss') delete day.missReason
   day.updatedAt = Date.now()
 }

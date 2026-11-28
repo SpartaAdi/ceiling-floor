@@ -1,9 +1,12 @@
 import { useState } from 'react'
-import { Check, EyeOff, History, X } from 'lucide-react'
+import { Check, ChevronDown, EyeOff, History, X } from 'lucide-react'
 import type { Block, DayLog } from '../types'
 import { nowMin, toMin } from '../lib/time'
 import { useStore } from '../store/AppStore'
 import { Time12 } from './ui'
+
+/** Most recent blocks shown first; the rest one tap away (the timeline below has them all too). */
+const PREVIEW = 3
 
 const dismissKey = (date: string) => `cfm:catchup-dismissed:${date}`
 
@@ -19,6 +22,7 @@ const readDismissed = (date: string) => {
 export function CatchUpCard({ date, day, blocks, now }: { date: string; day?: DayLog; blocks: Block[]; now: Date }) {
   const { setBlockStatus } = useStore()
   const [dismissed, setDismissed] = useState(() => readDismissed(date))
+  const [showAll, setShowAll] = useState(false)
   if (dismissed || day?.mode) return null
 
   const m = nowMin(now)
@@ -72,7 +76,7 @@ export function CatchUpCard({ date, day, blocks, now }: { date: string; day?: Da
         </div>
       </div>
       <ul className="flex flex-col gap-1">
-        {pending.map((b) => (
+        {(showAll ? pending : pending.slice(-PREVIEW)).map((b) => (
           <li key={b.id} className="flex items-center gap-2 rounded-xl bg-white px-2.5 py-1 dark:bg-night-card">
             <Time12 hhmm={b.start} className="w-[68px] font-mono text-xs text-slate-600 dark:text-slate-400" />
             <span className="min-w-0 flex-1 truncate text-sm font-medium text-brand dark:text-white">{b.title}</span>
@@ -93,6 +97,16 @@ export function CatchUpCard({ date, day, blocks, now }: { date: string; day?: Da
           </li>
         ))}
       </ul>
+      {pending.length > PREVIEW && (
+        <button
+          onClick={() => setShowAll((v) => !v)}
+          aria-expanded={showAll}
+          className="mt-1.5 inline-flex h-11 w-full items-center justify-center gap-1 rounded-xl text-xs font-semibold text-brand hover:bg-white dark:text-accent dark:hover:bg-night-card"
+        >
+          <ChevronDown size={14} className={showAll ? 'rotate-180 transition-transform' : 'transition-transform'} />
+          {showAll ? 'Show fewer' : `Show all ${pending.length}`}
+        </button>
+      )}
     </section>
   )
 }

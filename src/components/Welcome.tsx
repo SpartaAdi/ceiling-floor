@@ -21,7 +21,7 @@ export function Welcome({ today }: { today: string }) {
   const day = data.days[today]
   const steps = [
     { label: 'App ready', sub: 'Your Ceiling & Floor plans are loaded', done: true, go: () => {} },
-    { label: "Pick today's mode", sub: 'Ceiling, Floor or Miss • Ticks your blocks', done: !!day?.mode, go: () => scrollTo('mode-card') },
+    { label: "Pick today's mode", sub: 'Ceiling, Floor or Miss • Loads that plan', done: !!day?.mode, go: () => scrollTo('mode-card') },
     { label: 'Tick your habits', sub: 'Meds • Triphala • Eat Right…', done: !!day && Object.entries(day.habits).some(([id, v]) => v && !AUTO_HABITS.has(id)), go: () => scrollTo('habits-card') },
     { label: 'Write a check-in', sub: 'One positive thing about today', done: Object.values(data.days).some((d) => Object.values(d.reflection ?? {}).some(Boolean)), go: () => scrollTo('checkin-card') },
     { label: 'Set your first goal', sub: 'e.g. Deep work 20h a week', done: data.goals.length > 0, go: () => go('goals') },

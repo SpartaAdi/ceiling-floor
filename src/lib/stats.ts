@@ -9,12 +9,14 @@ export const blockScore = (day?: DayLog) => {
   return { done, total: day.blocks.length }
 }
 
-/** Status of a block, applying the day-mode default when not explicitly set. */
+/**
+ * Status of a block. Nothing is assumed done: an unticked block counts as not
+ * completed, and once the day is over it shows as missed.
+ */
 export const effectiveStatus = (day: DayLog, blockId: string) => {
   const s = day.statuses[blockId]
   if (s) return s
-  if (day.mode === 'ceiling' || day.mode === 'floor') return 'completed'
-  if (day.mode === 'miss') return 'missed'
+  if (day.mode === 'miss' || day.date < toKey(new Date())) return 'missed'
   return undefined
 }
 

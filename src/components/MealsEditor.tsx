@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Minus, Plus, RotateCcw, Trash2, X } from 'lucide-react'
+import { ChefHat, Minus, Plus, RotateCcw, Trash2, X } from 'lucide-react'
+import { brandLabel, foodById, qtyLabel } from '../data/foods'
 import type { MealOption, MealPlan, MealSlot } from '../types'
 import { useStore } from '../store/AppStore'
 import { toMin } from '../lib/time'
@@ -111,6 +112,8 @@ export function MealsEditor() {
         <Plus size={18} /> Add meal
       </button>
 
+      <MyFoods />
+
       <div className="sticky bottom-[calc(5rem+env(safe-area-inset-bottom))] z-20 flex gap-2 md:bottom-4">
         <button
           onClick={() => {
@@ -142,6 +145,64 @@ export function MealsEditor() {
           {!valid ? 'Name every meal & option' : dirty ? 'Save meal plan' : 'Saved'}
         </button>
       </div>
+    </div>
+  )
+}
+
+/** Foods you created while logging — see how each is worked out, delete mistakes. */
+function MyFoods() {
+  const { data, deleteMyFood, notify } = useStore()
+  const [armed, setArmed] = useState<string | null>(null)
+  const list = data.myFoods ?? []
+  return (
+    <div role="region" aria-label="My foods">
+    <Card className="flex flex-col gap-3">
+      <div className="flex items-center gap-2.5">
+        <span className="flex size-10 items-center justify-center rounded-xl bg-accent/30 text-brand dark:text-accent">
+          <ChefHat size={18} />
+        </span>
+        <div>
+          <h2 className="text-[15px] font-semibold text-brand dark:text-white">My foods</h2>
+          <p className="text-xs text-slate-600 dark:text-slate-400">Made while logging • like a listed food, or from ingredients</p>
+        </div>
+      </div>
+      {!list.length ? (
+        <p className="rounded-xl bg-slate-50 px-3 py-3 text-sm text-slate-600 dark:bg-night dark:text-slate-400">None yet. When you log something that isn’t on the list, choose “Create … as my food”.</p>
+      ) : (
+        <ul className="flex flex-col gap-1.5">
+          {list.map((f) => {
+            const how = f.like ? `Like ${foodById(f.like)?.name ?? 'a listed food'}` : f.recipe ? `${f.recipe.length} ingredient${f.recipe.length > 1 ? 's' : ''} • makes ${f.servings ?? 1}` : 'Your food'
+            return (
+              <li key={f.id} className="flex min-h-14 items-center gap-3 rounded-xl border border-slate-200 px-3 py-2 dark:border-night-line">
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold text-brand dark:text-white">{f.name}</span>
+                  <span className="block truncate text-xs tabular-nums text-slate-600 dark:text-slate-400">
+                    {brandLabel(f) ? `${brandLabel(f)} • ` : ''}
+                    {how} • {qtyLabel(f, 1)} ≈ {Math.round(f.kcal)} kcal · {Math.round(f.protein)} g protein
+                  </span>
+                </span>
+                <button
+                  aria-label={armed === f.id ? `Confirm delete ${f.name}` : `Delete ${f.name}`}
+                  onClick={() => {
+                    if (armed !== f.id) {
+                      setArmed(f.id)
+                      window.setTimeout(() => setArmed((a) => (a === f.id ? null : a)), 2500)
+                      return
+                    }
+                    deleteMyFood(f.id)
+                    setArmed(null)
+                    notify(`Deleted ${f.name}`)
+                  }}
+                  className={cx('flex h-11 shrink-0 items-center justify-center gap-1 rounded-xl px-3 text-xs font-semibold', armed === f.id ? 'bg-miss-solid text-white' : 'text-slate-500 hover:bg-miss/10 hover:text-miss-ink')}
+                >
+                  <Trash2 size={15} /> {armed === f.id ? 'Delete?' : ''}
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </Card>
     </div>
   )
 }

@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
-import { Check, ChevronRight, Droplets, Minus, Plus, Salad, Sparkles, Utensils, X } from 'lucide-react'
-import type { LoggedFood, MealLog, MealSlot } from '../types'
+import { Check, ChevronRight, Clock3, Droplets, Minus, Plus, Salad, Sparkles, Trash2, Utensils, X } from 'lucide-react'
+import type { FoodEntry, LoggedFood, MealLog, MealSlot } from '../types'
 import { useStore } from '../store/AppStore'
-import { allowedEatOuts, currentSlotId, daySummary, eatOutsInWeek, mealState, optionsOf, type MealState } from '../lib/diet'
-import { DEFAULT_TARGETS, addN, dayN, defaultServings, foodN, mealItems, mealN, optionItems, rangeStatus, round, ZERO, type Nutrients } from '../lib/nutrition'
-import { parseFoods, type ParsedItem } from '../lib/foodParse'
-import { FOOD_BY_ID, UNIT_CHOICES, qtyLabel, type Food } from '../data/foods'
+import { allowedEatOuts, currentSlotId, daySummary, eatOutsInWeek, mealState, offPlanEntries, optionsOf, type MealState } from '../lib/diet'
+import { DEFAULT_TARGETS, addN, dayN, defaultServings, foodN, foodsN, mealItems, mealN, optionItems, rangeStatus, round, ZERO, type Nutrients } from '../lib/nutrition'
+import { brandLabel, foodById, qtyLabel } from '../data/foods'
+import { FoodPicker, recentFoods } from './FoodPicker'
 import { fmt12, nowMin, weekStartOf } from '../lib/time'
 import { BottomSheet, Card, Time12, cx } from './ui'
 
@@ -27,12 +27,12 @@ function mealSummary(slot: MealSlot, log?: MealLog) {
   const parts: string[] = []
   for (const o of optionsOf(slot, log)) {
     const s = log.servings?.[o.id]
-    if (o.adjust && s !== undefined) parts.push(qtyLabel(FOOD_BY_ID[o.adjust], s))
+    if (o.adjust && s !== undefined) parts.push(qtyLabel(foodById(o.adjust)!, s))
     else parts.push(s && s !== 1 ? `${frac(s)}× ${o.label}` : o.label)
   }
   for (const a of slot.addOns ?? []) if (log.addOns?.includes(a.id)) parts.push(a.label)
   for (const e of log.extras ?? []) {
-    const f = e.food ? FOOD_BY_ID[e.food] : undefined
+    const f = foodById(e.food)
     if (!f) { parts.push(e.name); continue }
     const q = qtyLabel(f, e.qty)
     const name = f.name.toLowerCase()
@@ -81,6 +81,7 @@ function Meter({ label, value, range, unit }: { label: string; value: number; ra
 export function DietCard({ date, now, live }: { date: string; now: Date; live: boolean }) {
   const { data, logMeal, setWater } = useStore()
   const [open, setOpen] = useState<MealSlot | null>(null)
+  const [logSheet, setLogSheet] = useState<{ entry?: FoodEntry } | null>(null)
   const plan = data.mealPlan
   const day = data.days[date]
   const sum = daySummary(data, date)
@@ -91,6 +92,9 @@ export function DietCard({ date, now, live }: { date: string; now: Date; live: b
   const targets = plan.targets ?? DEFAULT_TARGETS
   const ateOutEarlier = (slot: MealSlot) => plan.slots.some((s) => s.time < slot.time && ['treat', 'over'].includes(mealState(data, date, s, allowed)))
   const liters = (g: number) => `${Math.round(g * 0.25 * 100) / 100} L`
+  const offIds = new Set(offPlanEntries(data, date).map((e) => e.id))
+  // Planned meals and your timed food log, in one time-ordered list
+  const timeline = [...plan.slots.map((slot) => ({ time: slot.time, slot, entry: undefined as FoodEntry | undefined })), ...(day?.foodLog ?? []).map((entry) => ({ time: entry.time, slot: undefined as MealSlot | undefined, entry }))].sort((a, b) => a.time.localeCompare(b.time) || (a.slot ? -1 : 1))
 
   const quickDone = (slot: MealSlot) => {
     if (slot.options.length === 1 && !slot.addOns?.length) logMeal(date, slot.id, { status: 'done', optionIds: [slot.options[0].id] })
@@ -146,8 +150,46 @@ export function DietCard({ date, now, live }: { date: string; now: Date; live: b
         </span>
       </div>
 
+      {/* Log anything, any time — on or off plan */}
+      <button
+        onClick={() => setLogSheet({})}
+        className="group mb-2 flex min-h-14 w-full items-center gap-3 rounded-2xl border-2 border-dashed border-brand/25 bg-accent/10 px-3 py-2 text-left transition-colors hover:border-brand hover:bg-accent/20 dark:border-accent/35 dark:bg-accent/5 dark:hover:border-accent"
+      >
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-brand shadow-sm transition-transform group-active:scale-95">
+          <Plus size={20} strokeWidth={2.6} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-bold text-brand dark:text-white">Log food or drink</span>
+          <span className="block text-xs text-slate-600 dark:text-slate-400">Anything, any time • snacks, off-plan, eating out</span>
+        </span>
+        <ChevronRight size={18} className="shrink-0 text-slate-400" />
+      </button>
+
       <ol aria-label="Meals" className="flex flex-col gap-1.5">
-        {plan.slots.map((slot) => {
+        {timeline.map((row) => {
+          if (row.entry) {
+            const e = row.entry
+            const food = foodById(e.food)
+            const n = foodN(e.food, e.qty)
+            const off = offIds.has(e.id)
+            return (
+              <li key={e.id}>
+                <button
+                  onClick={() => setLogSheet({ entry: e })}
+                  aria-label={`${food?.name ?? e.name} at ${fmt12(e.time)} • ${off ? 'Off plan' : 'Extra'}`}
+                  className="flex min-h-14 w-full items-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-white px-3 py-2 text-left hover:border-brand dark:border-night-line dark:bg-night-card"
+                >
+                  <Time12 hhmm={e.time} className="w-[60px] shrink-0 font-mono text-[13px] font-semibold text-brand dark:text-white" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-semibold text-brand dark:text-white">{food?.name ?? e.name}</span>
+                    <span className="block truncate text-xs tabular-nums text-slate-600 dark:text-slate-400">{food ? [brandLabel(food), qtyLabel(food, e.qty), `≈ ${round(n.kcal)} kcal`].filter(Boolean).join(' • ') : 'Note • not counted'}</span>
+                  </span>
+                  <span className={cx('shrink-0 rounded-full px-2 py-1 text-[11px] font-bold', off ? 'bg-miss/10 text-miss-ink' : 'bg-accent/25 text-brand dark:text-accent')}>{off ? 'Off plan' : 'Extra'}</span>
+                </button>
+              </li>
+            )
+          }
+          const slot = row.slot!
           const log = day?.meals?.[slot.id]
           const state = mealState(data, date, slot, allowed)
           const ui = STATE_UI[state]
@@ -222,40 +264,13 @@ export function DietCard({ date, now, live }: { date: string; now: Date; live: b
         </button>
       </div>
 
+      {logSheet && <LogFoodSheet key={logSheet.entry?.id ?? 'new'} date={date} entry={logSheet.entry} defaultTime={live ? `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}` : '13:00'} onClose={() => setLogSheet(null)} />}
       {open && <MealSheet key={open.id} date={date} slot={open} suggestLight={ateOutEarlier(open)} eatOutsUsed={eatOuts} onClose={() => setOpen(null)} />}
     </Card>
   )
 }
 
 /* ---------- Meal sheet: multi-select plan options + your own words ---------- */
-
-function QtyChips({ food, qty, onChange, label }: { food: Food; qty: number; onChange: (q: number) => void; label: string }) {
-  const choices = UNIT_CHOICES[food.unit]
-  const custom = !choices.includes(qty)
-  return (
-    <div role="radiogroup" aria-label={label} className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1 pb-0.5">
-      {custom && (
-        <button role="radio" aria-checked className="h-11 shrink-0 rounded-full border-2 border-brand bg-brand px-3 text-xs font-bold text-white dark:border-accent dark:bg-accent dark:text-brand">
-          {qtyLabel(food, qty)}
-        </button>
-      )}
-      {choices.map((c) => (
-        <button
-          key={c}
-          role="radio"
-          aria-checked={qty === c}
-          onClick={() => onChange(c)}
-          className={cx(
-            'h-11 shrink-0 rounded-full border-2 px-3 text-xs font-bold transition-colors',
-            qty === c ? 'border-brand bg-brand text-white dark:border-accent dark:bg-accent dark:text-brand' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-400 dark:border-night-line dark:bg-night-card dark:text-slate-300',
-          )}
-        >
-          {qtyLabel(food, c)}
-        </button>
-      ))}
-    </div>
-  )
-}
 
 function Stepper({ value, min, max, onChange, label, text }: { value: number; min: number; max: number; onChange: (n: number) => void; label: string; text: string }) {
   return (
@@ -282,31 +297,22 @@ function MealSheet({ date, slot, suggestLight, eatOutsUsed, onClose }: { date: s
   // Smart default: add-ons (e.g. nuts) start ticked for a fresh log
   const [addOns, setAddOns] = useState<string[]>(() => done?.addOns ?? (current ? [] : (slot.addOns?.map((a) => a.id) ?? [])))
   const [extras, setExtras] = useState<LoggedFood[]>(() => done?.extras ?? [])
-  const [text, setText] = useState('')
-  const [unsure, setUnsure] = useState<ParsedItem[]>([])
+  const recent = useMemo(() => recentFoods(data, date, 6), [data, date])
   const allowance = data.mealPlan.eatOutPerWeek
 
   const toggle = (id: string) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]))
-  const addText = () => {
-    const parsed = parseFoods(text)
-    setExtras((e) => [...e, ...parsed.filter((p) => p.food).map((p) => ({ food: p.food!.id, name: p.food!.name, qty: p.qty }))])
-    setUnsure((u) => [...u, ...parsed.filter((p) => !p.food)])
-    setText('')
-  }
-  const preview = useMemo(() => (text.trim() ? parseFoods(text) : []), [text])
 
   const draft: MealLog = { status: 'done', optionIds: picked, servings, addOns, extras }
   const total = useMemo(() => mealItems(slot, draft).reduce((acc, i) => addN(acc, foodN(i.food, i.qty)), ZERO), [slot, picked, servings, addOns, extras]) // eslint-disable-line
-  const canSave = picked.length > 0 || extras.length > 0 || unsure.length > 0
+  const canSave = picked.length > 0 || extras.length > 0
 
   const save = (log: MealLog | undefined) => {
     logMeal(date, slot.id, log)
     onClose()
   }
   const saveDraft = () => {
-    const notes = unsure.map((u) => ({ name: u.raw, qty: 1 }))
     const cleanServ = Object.fromEntries(Object.entries(servings).filter(([k]) => picked.includes(k)))
-    save({ status: 'done', optionIds: picked, ...(Object.keys(cleanServ).length ? { servings: cleanServ } : {}), ...(slot.addOns?.length ? { addOns } : {}), ...(extras.length || notes.length ? { extras: [...extras, ...notes] } : {}) })
+    save({ status: 'done', optionIds: picked, ...(Object.keys(cleanServ).length ? { servings: cleanServ } : {}), ...(slot.addOns?.length ? { addOns } : {}), ...(extras.length ? { extras } : {}) })
   }
 
   return (
@@ -327,7 +333,7 @@ function MealSheet({ date, slot, suggestLight, eatOutsUsed, onClose }: { date: s
                   : o.afterEatingOut && suggestLight
                     ? { t: 'Suggested', c: 'bg-ceiling/10 text-ceiling-ink' }
                     : null
-              const adjustFood = o.adjust ? FOOD_BY_ID[o.adjust] : undefined
+              const adjustFood = foodById(o.adjust)
               return (
                 <div key={o.id} className={cx('rounded-2xl border-2 transition-colors', on ? 'border-brand bg-brand/5 dark:border-accent dark:bg-accent/10' : 'border-slate-200 bg-white dark:border-night-line dark:bg-night-card')}>
                   <button role="checkbox" aria-checked={on} aria-label={o.label} onClick={() => toggle(o.id)} className="flex min-h-14 w-full items-start gap-3 px-3 py-2.5 text-left">
@@ -390,78 +396,10 @@ function MealSheet({ date, slot, suggestLight, eatOutsUsed, onClose }: { date: s
           </section>
         ) : null}
 
-        {/* Your own words */}
+        {/* Anything else, in your own words or picked from the list */}
         <section>
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Anything else? Type it</p>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault()
-              if (text.trim()) addText()
-            }}
-            className="flex gap-2"
-          >
-            <input
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              aria-label="What else did you have"
-              placeholder="e.g. 2 boiled eggs, ½ katori poha, chai"
-              className="h-12 min-w-0 flex-1 rounded-2xl border-2 border-slate-200 bg-white px-4 text-[15px] text-brand outline-none placeholder:text-slate-400 focus:border-brand dark:border-night-line dark:bg-night-card dark:text-white dark:focus:border-accent"
-            />
-            <button disabled={!text.trim()} className="h-12 shrink-0 rounded-2xl bg-brand px-4 text-sm font-bold text-white disabled:opacity-40 dark:bg-accent dark:text-brand">
-              Add
-            </button>
-          </form>
-          {preview.length > 0 && (
-            <p className="mt-1.5 text-xs text-slate-600 dark:text-slate-400">
-              Detected: {preview.map((p) => (p.food ? `${qtyLabel(p.food, p.qty)} ${p.food.name.toLowerCase()}` : `"${p.raw}"?`)).join(' • ')}
-            </p>
-          )}
-
-          {extras.length > 0 && (
-            <ul aria-label="Added foods" className="mt-3 flex flex-col gap-2">
-              {extras.map((e, i) => {
-                const food = e.food ? FOOD_BY_ID[e.food] : undefined
-                return (
-                  <li key={i} className="rounded-2xl border border-slate-200 bg-white p-3 dark:border-night-line dark:bg-night-card">
-                    <div className="mb-2 flex items-center justify-between gap-2">
-                      <span className="min-w-0">
-                        <span className="block truncate text-sm font-semibold text-brand dark:text-white">{food?.name ?? e.name}</span>
-                        {food && <span className="block text-[11px] tabular-nums text-slate-500 dark:text-slate-400">{est(foodN(food.id, e.qty))}</span>}
-                      </span>
-                      <button aria-label={`Remove ${food?.name ?? e.name}`} onClick={() => setExtras((x) => x.filter((_, j) => j !== i))} className="flex size-11 shrink-0 items-center justify-center rounded-xl text-slate-500 hover:bg-miss/10 hover:text-miss-ink">
-                        <X size={16} />
-                      </button>
-                    </div>
-                    {food && <QtyChips food={food} qty={e.qty} label={`${food.name} quantity`} onChange={(q) => setExtras((x) => x.map((y, j) => (j === i ? { ...y, qty: q } : y)))} />}
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-
-          {unsure.map((u, i) => (
-            <div key={`${u.raw}-${i}`} className="mt-2 rounded-2xl border-2 border-dashed border-floor/50 bg-floor/5 p-3">
-              <p className="text-sm font-semibold text-brand dark:text-white">Not sure what “{u.raw}” is</p>
-              <p className="mb-2 text-xs text-slate-600 dark:text-slate-400">{u.suggestions.length ? 'Did you mean…' : 'Saved as a note • not counted in estimates'}</p>
-              <div className="flex flex-wrap gap-1.5">
-                {u.suggestions.map((s) => (
-                  <button
-                    key={s.id}
-                    onClick={() => {
-                      setExtras((x) => [...x, { food: s.id, name: s.name, qty: u.qtyGiven ? u.qty : s.defaultQty }])
-                      setUnsure((l) => l.filter((_, j) => j !== i))
-                    }}
-                    className="h-11 rounded-full border-2 border-slate-200 bg-white px-3 text-xs font-semibold text-brand hover:border-brand dark:border-night-line dark:bg-night-card dark:text-white"
-                  >
-                    {s.name}
-                  </button>
-                ))}
-                <button onClick={() => setUnsure((l) => l.filter((_, j) => j !== i))} className="h-11 rounded-full px-3 text-xs font-semibold text-slate-600 dark:text-slate-400">
-                  Remove
-                </button>
-              </div>
-            </div>
-          ))}
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Anything else?</p>
+          <FoodPicker items={extras} onItems={setExtras} recent={recent} label="What else did you have" placeholder="Search or type: 2 roti, dal, chai" />
         </section>
 
         {/* Sticky footer: running estimate + primary action in the thumb zone */}
@@ -481,6 +419,101 @@ function MealSheet({ date, slot, suggestLight, eatOutsUsed, onClose }: { date: s
             )}
             <button disabled={!canSave} onClick={saveDraft} className="h-12 flex-1 rounded-2xl bg-brand text-sm font-bold text-white shadow-lg shadow-brand/20 disabled:opacity-40 dark:bg-accent dark:text-brand">
               {canSave ? 'Save' : 'Pick or type what you had'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </BottomSheet>
+  )
+}
+
+/* ---------- Log food: anything, any time (outside the planned meals) ---------- */
+
+const QUICK_TIMES: { label: string; t: string }[] = [
+  { label: 'Breakfast', t: '09:00' },
+  { label: 'Lunch', t: '13:30' },
+  { label: 'Evening', t: '17:00' },
+  { label: 'Dinner', t: '20:30' },
+  { label: 'Late night', t: '23:00' },
+]
+
+function LogFoodSheet({ date, entry, defaultTime, onClose }: { date: string; entry?: FoodEntry; defaultTime: string; onClose: () => void }) {
+  const { data, addFoodEntries, updateFoodEntry, deleteFoodEntry } = useStore()
+  const [time, setTime] = useState(entry?.time ?? defaultTime)
+  const [items, setItems] = useState<LoggedFood[]>(() => (entry ? [{ food: entry.food, name: entry.name, qty: entry.qty }] : []))
+  const recent = useMemo(() => recentFoods(data, date, 8), [data, date])
+  const total = foodsN(items)
+  const count = items.length
+
+  const save = () => {
+    const withTime = items.map((i) => ({ ...i, time }))
+    if (entry) {
+      if (!withTime.length) deleteFoodEntry(date, entry.id)
+      else {
+        updateFoodEntry(date, { ...withTime[0], id: entry.id })
+        addFoodEntries(date, withTime.slice(1))
+      }
+    } else addFoodEntries(date, withTime)
+    onClose()
+  }
+
+  return (
+    <BottomSheet open onClose={onClose} title={entry ? 'Edit food' : 'Log food or drink'} sub="Pick from the list • no weighing needed" wide>
+      <div className="flex flex-col gap-5 pb-2">
+        <section>
+          <p className="mb-2 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+            <Clock3 size={11} /> When
+          </p>
+          <div className="flex items-center gap-2">
+            <label className="relative">
+              <span className="sr-only">Time eaten</span>
+              <input
+                type="time"
+                value={time}
+                onChange={(e) => e.target.value && setTime(e.target.value)}
+                aria-label="Time eaten"
+                className="h-12 rounded-2xl border-2 border-slate-200 bg-white px-3 text-[15px] font-bold tabular-nums text-brand outline-none focus:border-brand dark:border-night-line dark:bg-night-card dark:text-white dark:focus:border-accent"
+              />
+            </label>
+          </div>
+          <div className="no-scrollbar -mx-1 mt-2 flex gap-1.5 overflow-x-auto px-1">
+            {[{ label: 'Now', t: defaultTime }, ...QUICK_TIMES].map((q) => (
+              <button
+                key={q.label}
+                aria-pressed={time === q.t}
+                onClick={() => setTime(q.t)}
+                className={cx('h-10 shrink-0 rounded-full border-2 px-3 text-xs font-bold', time === q.t ? 'border-brand bg-brand text-white dark:border-accent dark:bg-accent dark:text-brand' : 'border-slate-200 text-slate-600 dark:border-night-line dark:text-slate-300')}
+              >
+                {q.label}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section>
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">What did you have?</p>
+          <FoodPicker items={items} onItems={setItems} recent={recent} label="Search food or drink" placeholder="Try: coffee, vada pav, 2 samosa" autoFocus={!entry} />
+        </section>
+
+        <div className="sticky bottom-0 -mx-4 border-t border-slate-200 bg-paper/95 px-4 pb-2 pt-3 backdrop-blur dark:border-night-line dark:bg-night/95">
+          <div className="mb-2 flex items-baseline justify-between gap-2">
+            <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">{count ? `${count} item${count > 1 ? 's' : ''} at ${fmt12(time)}` : 'Nothing added yet'}</span>
+            <span className="text-sm font-bold tabular-nums text-brand dark:text-white">{total.kcal > 0 ? est(total) : '—'}</span>
+          </div>
+          <div className="flex gap-2">
+            {entry && (
+              <button
+                onClick={() => {
+                  deleteFoodEntry(date, entry.id)
+                  onClose()
+                }}
+                className="inline-flex h-12 items-center justify-center gap-1.5 rounded-2xl border-2 border-miss/30 px-4 text-sm font-semibold text-miss-ink hover:bg-miss/10"
+              >
+                <Trash2 size={15} /> Delete
+              </button>
+            )}
+            <button disabled={!count && !entry} onClick={save} className="h-12 flex-1 rounded-2xl bg-brand text-sm font-bold text-white shadow-lg shadow-brand/20 disabled:opacity-40 dark:bg-accent dark:text-brand">
+              {entry ? 'Save' : count ? `Log ${count} item${count > 1 ? 's' : ''}` : 'Add something first'}
             </button>
           </div>
         </div>

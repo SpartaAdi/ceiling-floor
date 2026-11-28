@@ -1,4 +1,4 @@
-import { expect, modeTile, nav, openAt, test } from './fixtures'
+import { expect, modeTile, nav, openAt, test, timeline } from './fixtures'
 
 test('goals: starter, auto-tracking, manual count, edit, archive, delete', async ({ page, errors: _ }) => {
   await openAt(page, '2026-11-18T12:00:00')
@@ -10,6 +10,8 @@ test('goals: starter, auto-tracking, manual count, edit, archive, delete', async
   await expect(page.getByRole('status')).toContainText('Goal added')
   await nav(page, 'Today').click()
   await modeTile(page, 'Ceiling').click()
+  // only ticked blocks count toward the goal
+  for (const t of ['Morning Sitting', 'Evening Sitting']) await timeline(page).getByRole('button', { name: `${t} done` }).click()
   await nav(page, 'Goals').click()
   const deep = page.locator('section', { has: page.getByRole('heading', { name: 'Deep work 20h' }) })
   await expect(deep).toContainText('2.5h')

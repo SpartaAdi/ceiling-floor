@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import type { AppData, Block, BlockStatus, DayMode, FacetId, Goal, Habit, MealLog, MealPlan, Reflection, Reminders, Targets, TemplateKey, Theme, WeekPriority, WeekReview } from '../types'
+import type { AppData, Block, BlockStatus, DayMode, FacetId, FoodEntry, Goal, Habit, MealLog, MealPlan, Reflection, Reminders, Targets, TemplateKey, Theme, WeekPriority, WeekReview } from '../types'
 import { createDefaultData, defaultHabits, defaultTemplates } from '../data/defaults'
 import { storage } from '../services/storageService'
 import { templateFor, toKey, toMin, weekStartOf } from '../lib/time'
@@ -9,6 +9,7 @@ import { syncEatRight, syncExercise } from '../lib/diet'
 import { defaultMealPlan } from '../data/defaults'
 import { mergeData, stampChanges } from '../sync/merge'
 import { withDemoData, withoutDemoData } from '../lib/demo'
+import { setCustomFoods, type Food } from '../data/foods'
 
 type Draft = (d: AppData) => void
 
@@ -53,6 +54,13 @@ interface Store {
   setOnboardingDone: (done: boolean) => void
   logMeal: (date: string, slotId: string, log: MealLog | undefined) => void
   setWater: (date: string, glasses: number) => void
+  /** Timed food log (anything outside the planned meals) */
+  addFoodEntries: (date: string, entries: Omit<FoodEntry, 'id'>[]) => void
+  updateFoodEntry: (date: string, entry: FoodEntry) => void
+  deleteFoodEntry: (date: string, id: string) => void
+  /** Save a food to your personal list (made from ingredients or like a listed food) */
+  saveMyFood: (food: Food) => void
+  deleteMyFood: (id: string) => void
   setMealPlan: (plan: MealPlan) => void
   resetMealPlan: () => void
   /** Merge data that came from another device (sync only) */
@@ -68,6 +76,8 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const toastTimer = useRef<number | undefined>(undefined)
+  // Personal foods are searchable/estimable everywhere (cheap; runs on every render)
+  setCustomFoods(data.myFoods)
 
   useEffect(() => {
     storage.load().then((loaded) => {
@@ -300,6 +310,50 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
           const day = ensureDay(d, date)
           day.water = Math.max(0, Math.min(30, glasses))
           day.updatedAt = Date.now()
+        }),
+
+      addFoodEntries: (date, entries) =>
+        mutate((d) => {
+          if (!entries.length) return
+          const day = ensureDay(d, date)
+          const list = (day.foodLog ??= [])
+          for (const e of entries) list.push({ ...e, id: `f${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}` })
+          list.sort((a, b) => a.time.localeCompare(b.time))
+          day.updatedAt = Date.now()
+          syncEatRight(d, date)
+        }),
+
+      updateFoodEntry: (date, entry) =>
+        mutate((d) => {
+          const day = d.days[date]
+          if (!day?.foodLog) return
+          day.foodLog = day.foodLog.map((e) => (e.id === entry.id ? entry : e)).sort((a, b) => a.time.localeCompare(b.time))
+          day.updatedAt = Date.now()
+          syncEatRight(d, date)
+        }),
+
+      deleteFoodEntry: (date, id) =>
+        mutate((d) => {
+          const day = d.days[date]
+          if (!day?.foodLog) return
+          day.foodLog = day.foodLog.filter((e) => e.id !== id)
+          if (!day.foodLog.length) delete day.foodLog
+          day.updatedAt = Date.now()
+          syncEatRight(d, date)
+        }),
+
+      saveMyFood: (food) =>
+        mutate((d) => {
+          const list = (d.myFoods ??= [])
+          const i = list.findIndex((x) => x.id === food.id)
+          if (i >= 0) list[i] = food
+          else list.unshift(food)
+        }),
+
+      deleteMyFood: (id) =>
+        mutate((d) => {
+          d.myFoods = (d.myFoods ?? []).filter((x) => x.id !== id)
+          if (!d.myFoods.length) delete d.myFoods
         }),
 
       setMealPlan: (plan) =>

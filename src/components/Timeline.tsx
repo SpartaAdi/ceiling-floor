@@ -121,7 +121,8 @@ export function Timeline({ date, day, blocks, now, live, readOnly }: { date: str
   const current = live ? blocks.find((b) => m >= toMin(b.start) && m < toMin(b.end, true)) : undefined
 
   useEffect(() => {
-    if (!live) return
+    // Phones show the Now card at the top already — don't yank the page past Welcome/mode
+    if (!live || !window.matchMedia?.('(min-width: 1024px)').matches) return
     const t = window.setTimeout(() => {
       listRef.current?.querySelector('[data-now]')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
     }, 250)

@@ -14,6 +14,7 @@ import { DayFacets, NowNext, ReflectionCard } from '../components/DayPanels'
 import { Card, Kbd, PageHeader, cx } from '../components/ui'
 import { Welcome } from '../components/Welcome'
 import { DietCard } from '../components/DietCard'
+import { SectionNav } from '../components/SectionNav'
 import type { DayMode } from '../types'
 
 const isTyping = (e: KeyboardEvent) => {
@@ -141,6 +142,7 @@ export function DayScreen({
       )}
 
       <WeekBar week={week} targets={data.settings.targets} selected={date} onSelect={setDate} />
+      <SectionNav key={date} future={future} />
 
       <div className="mt-4 flex flex-col gap-4 md:mt-5 lg:grid lg:grid-cols-[minmax(360px,420px)_minmax(0,1fr)] lg:gap-5">
         {/* Left: decide + habits + reflect (phone: interleaved via order-*) */}
@@ -184,7 +186,7 @@ export function DayScreen({
           </Card>
           </div>
 
-          <div className="order-6 empty:hidden lg:order-none">
+          <div id={future ? undefined : 'habits-card'} className="order-6 empty:hidden lg:order-none">
           {future ? (
             <Card className="flex items-start gap-3">
               <CalendarClock size={18} className="mt-0.5 shrink-0 text-brand dark:text-accent" />
@@ -195,7 +197,6 @@ export function DayScreen({
             </Card>
           ) : (
             <Card className="flex scroll-mt-6 flex-col gap-4">
-              <span id="habits-card" />
               <EssentialsStrip date={date} now={now} live={isToday} />
               <CareStrip date={date} />
             </Card>
@@ -228,7 +229,7 @@ export function DayScreen({
           {isToday && <CatchUpCard key={date} date={date} day={day} blocks={blocks} now={now} />}
           </div>
           <div className="order-5 empty:hidden lg:order-none">
-          <div>
+          <div id="timeline-card">
             <div className="mb-2 flex items-baseline justify-between px-1">
               <h2 className="text-[15px] font-semibold text-brand dark:text-white">Timeline</h2>
               <span className={cx('text-xs', isPreview ? 'font-semibold text-floor-ink' : 'text-slate-600 dark:text-slate-400')}>
@@ -243,7 +244,7 @@ export function DayScreen({
             </div>
             <Timeline key={date} date={date} day={day} blocks={blocks} now={now} live={isToday} readOnly={future} />
             <p className="mt-3 px-1 text-center text-[11px] text-slate-600 dark:text-slate-400">
-              {future ? 'Ticks unlock on the day' : 'Tick ✓ for done and ✕ for missed • Works on any day mode'}
+              {future ? 'Ticks unlock on the day' : 'Tick ✓ for done and ✕ for missed • Anything left unticked counts as not done'}
             </p>
           </div>
           </div>

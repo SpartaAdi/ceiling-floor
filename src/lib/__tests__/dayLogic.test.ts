@@ -3,13 +3,13 @@ import { applyDayMode, ensureSnapshot, resetDayLog, setDayPlan } from '../dayLog
 import { MON, SAT, fresh, logDay } from './helpers'
 
 describe('applyDayMode', () => {
-  it('Ceiling snapshots the template and auto-ticks every block green', () => {
+  it('Ceiling snapshots the template; blocks start unticked (nothing assumed done)', () => {
     const d = fresh()
     applyDayMode(d, MON, 'ceiling')
     const day = d.days[MON]
     expect(day.template).toBe('weekday-ceiling')
     expect(day.blocks).toHaveLength(14)
-    expect(Object.values(day.statuses).every((s) => s === 'completed')).toBe(true)
+    expect(day.statuses).toEqual({})
   })
   it('Floor uses the Floor template', () => {
     const d = fresh()
@@ -23,7 +23,7 @@ describe('applyDayMode', () => {
     expect(Object.values(d.days[MON].statuses).every((s) => s === 'missed')).toBe(true)
     applyDayMode(d, MON, 'ceiling')
     expect(d.days[MON].missReason).toBeUndefined()
-    expect(Object.values(d.days[MON].statuses).every((s) => s === 'completed')).toBe(true)
+    expect(d.days[MON].statuses).toEqual({}) // red ticks don't carry over to a Ceiling day
   })
   it('keeps catch-up logs made before a mode was picked (same template)', () => {
     const d = fresh()

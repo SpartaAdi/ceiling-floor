@@ -73,7 +73,7 @@ export function ReviewScreen({ now, ws, setWs }: { now: Date; ws: string; setWs:
       ) : (
         <div className="flex flex-col gap-5">
           {/* Headline numbers */}
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5 max-md:[&>*:last-child:nth-child(odd)]:col-span-2">
             <Card className="flex flex-col gap-1">
               <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">Week result</span>
               <span className={cx('mt-1 inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-bold', hm.bg, hm.text)}>
@@ -104,10 +104,16 @@ export function ReviewScreen({ now, ws, setWs }: { now: Date; ws: string; setWs:
                   <thead>
                     <tr className="text-left text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-400">
                       <th className="pb-2 font-semibold">Area</th>
-                      <th className="pb-2 text-right font-semibold">This week</th>
-                      <th className="pb-2 text-right font-semibold">Last week</th>
-                      <th className="pb-2 text-right font-semibold">Change</th>
-                      <th className="pb-2 text-right font-semibold">Target</th>
+                      <th className="pb-2 pl-2 text-right font-semibold whitespace-nowrap">
+                        <span className="sm:hidden">This wk</span>
+                        <span className="hidden sm:inline">This week</span>
+                      </th>
+                      <th className="pb-2 pl-2 text-right font-semibold whitespace-nowrap">
+                        <span className="sm:hidden">Last wk</span>
+                        <span className="hidden sm:inline">Last week</span>
+                      </th>
+                      <th className="pb-2 pl-2 text-right font-semibold">Change</th>
+                      <th className="hidden pb-2 pl-2 text-right font-semibold sm:table-cell">Target</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -127,12 +133,15 @@ export function ReviewScreen({ now, ws, setWs }: { now: Date; ws: string; setWs:
                               <f.Icon size={15} style={{ color: f.color }} /> {f.label}
                             </span>
                           </td>
-                          <td className="py-2 text-right font-semibold tabular-nums text-brand dark:text-white">{val}</td>
-                          <td className="py-2 text-right tabular-nums text-slate-600 dark:text-slate-400">{prevVal}</td>
-                          <td className="py-2 text-right">
+                          <td className="py-2 pl-2 text-right font-semibold tabular-nums text-brand dark:text-white">
+                            {hit && <Check size={12} strokeWidth={3} aria-label="Target hit" className="mr-1 inline text-ceiling-ink sm:hidden" />}
+                            {val}
+                          </td>
+                          <td className="py-2 pl-2 text-right tabular-nums text-slate-600 dark:text-slate-400">{prevVal}</td>
+                          <td className="py-2 pl-2 text-right whitespace-nowrap">
                             <DeltaText value={delta} fmt={(d) => (hours ? fmtH(Math.abs(d)) : `${Math.abs(d)} pts`)} />
                           </td>
-                          <td className="py-2 text-right">
+                          <td className="hidden py-2 pl-2 text-right sm:table-cell">
                             <span className={cx('inline-flex items-center gap-1 text-xs font-semibold tabular-nums', hit ? 'text-ceiling-ink' : 'text-slate-600 dark:text-slate-400')}>
                               {hit && <Check size={12} strokeWidth={3} />} {target}
                             </span>

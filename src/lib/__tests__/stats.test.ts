@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { blockReport, blockScore, breakdown, classifyWeek, effectiveStatus, monthGrid, nonMissStreak, rangeFor, strongest, summarizeWeek, weakest } from '../stats'
 import { FRI, MON, SAT, SUN, THU, TUE, WED, fresh, logDay } from './helpers'
 import { setDayPlan } from '../dayLogic'
-import { addDays } from '../time'
+import { addDays, toKey } from '../time'
 
 const T = { ceiling: 5, floor: 2, miss: 0 }
 
@@ -75,12 +75,19 @@ describe('summarizeWeek: live budget + forecast', () => {
 })
 
 describe('block status + scores', () => {
-  it('defaults by mode, explicit overrides win', () => {
+  it('ticked blocks count; unticked ones are never assumed done', () => {
     const d = fresh()
     const day = logDay(d, MON, 'ceiling', { set: { Reading: 'missed', Gym: 'missed' } })
     expect(blockScore(day)).toEqual({ done: 12, total: 14 })
     delete day.statuses[day.blocks[0].id]
-    expect(effectiveStatus(day, day.blocks[0].id)).toBe('completed')
+    // MON is in the past → an unticked block shows as missed and isn't counted
+    expect(effectiveStatus(day, day.blocks[0].id)).toBe('missed')
+    expect(blockScore(day)).toEqual({ done: 11, total: 14 })
+    // today: still open (no status), and not counted as done either
+    const today = toKey(new Date())
+    const t = logDay(d, today, 'ceiling', { untick: true })
+    expect(effectiveStatus(t, t.blocks[0].id)).toBeUndefined()
+    expect(blockScore(t).done).toBe(0)
   })
   it('breakdown percentages', () => {
     const d = fresh()

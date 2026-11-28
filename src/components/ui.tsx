@@ -15,7 +15,7 @@ export function Card({ children, className }: { children: ReactNode; className?:
   return (
     <section
       className={cx(
-        'rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(10,37,64,0.04)] dark:border-night-line dark:bg-night-card',
+        'animate-rise rounded-2xl border border-slate-200/80 bg-white p-4 shadow-[0_1px_2px_rgba(10,37,64,0.04),0_10px_28px_-16px_rgba(10,37,64,0.14)] dark:border-night-line dark:bg-night-card dark:shadow-none',
         className,
       )}
     >

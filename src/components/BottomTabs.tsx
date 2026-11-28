@@ -86,8 +86,8 @@ function TabButton({
     >
       <span
         className={cx(
-          'relative flex h-8 w-14 items-center justify-center rounded-full transition-colors duration-200',
-          active ? 'bg-brand/10 dark:bg-accent/15' : 'bg-transparent',
+          'relative flex h-8 w-14 items-center justify-center rounded-full transition-all duration-300 ease-out',
+          active ? 'scale-100 bg-brand/10 dark:bg-accent/15' : 'scale-90 bg-transparent',
         )}
       >
         <Icon size={24} strokeWidth={active ? 2.4 : 1.9} />

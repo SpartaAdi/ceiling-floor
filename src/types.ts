@@ -1,3 +1,4 @@
+import type { Food } from './data/foods'
 export type DayMode = 'ceiling' | 'floor' | 'miss'
 export type DayType = 'weekday' | 'weekend'
 export type TemplateKey = 'weekday-ceiling' | 'weekday-floor' | 'weekend-ceiling' | 'weekend-floor'
@@ -64,6 +65,8 @@ export interface DayLog {
   habits: Record<string, boolean>
   /** Meal plan check-offs by slot id */
   meals?: Record<string, MealLog>
+  /** Anything eaten outside the plan's meals, with the time you had it */
+  foodLog?: FoodEntry[]
   /** Water glasses (250 ml) */
   water?: number
   /** 1 (drained) – 5 (great) */
@@ -153,7 +156,7 @@ export interface Settings {
 /** Bookkeeping for cross-device sync (set automatically, never by hand). */
 export interface SyncMeta {
   /** Last-change time per whole section */
-  sections: Partial<Record<'templates' | 'habits' | 'goals' | 'settings' | 'mealPlan', number>>
+  sections: Partial<Record<'templates' | 'habits' | 'goals' | 'settings' | 'mealPlan' | 'myFoods', number>>
   /** Deletion times, e.g. "day:2026-11-18" or "week:2026-11-16" */
   tombstones: Record<string, number>
 }
@@ -209,6 +212,12 @@ export interface LoggedFood {
   qty: number
 }
 
+/** A food logged at a time of day, outside the planned meals (snacks, cheat meals, anything). */
+export interface FoodEntry extends LoggedFood {
+  id: string
+  time: string // HH:MM
+}
+
 export interface MealLog {
   status: 'done' | 'skipped'
   /** Selected plan options (multi-select) */
@@ -227,6 +236,8 @@ export interface AppData {
   version: 2
   meta?: SyncMeta
   mealPlan: MealPlan
+  /** Your own foods: built from ingredients or "like" a listed food (searchable like the built-in list) */
+  myFoods?: Food[]
   templates: Record<TemplateKey, Block[]>
   habits: Habit[]
   days: Record<string, DayLog>

@@ -122,7 +122,7 @@ export function DashboardScreen({ now, onOpenDay }: { now: Date; onOpenDay: (d: 
 
       <div className="flex flex-col gap-5">
         {/* KPI row */}
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5 max-md:[&>*:last-child:nth-child(odd)]:col-span-2">
           <Kpi
             icon={<Target size={18} className="text-brand dark:text-accent" />}
             label="Life Score"

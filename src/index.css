@@ -119,8 +119,17 @@
 @utility animate-pop {
   animation: pop 0.22s ease-out;
 }
+/* Cards settle in as a page opens. "backwards" fill = no transform once done,
+   so fixed children (sheets, FAB) are never re-anchored after the first 0.3 s. */
+@keyframes rise-in {
+  from { opacity: 0; translate: 0 8px; }
+  to { opacity: 1; translate: 0 0; }
+}
+@utility animate-rise {
+  animation: rise-in 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-sheet, .animate-fade, .animate-pop, .animate-page { animation: none; }
+  .animate-sheet, .animate-fade, .animate-pop, .animate-page, .animate-rise { animation: none; }
   html { scroll-behavior: auto !important; }
 }

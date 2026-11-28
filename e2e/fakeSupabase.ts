@@ -98,7 +98,7 @@ export function fakeSupabase() {
     },
     row: (email: string) => {
       const u = [...users.values()].find((x) => x.email === email)
-      return (u ? rows.get(u.id)?.data : undefined) as { days: Record<string, { mode?: string; statuses: Record<string, string>; blocks: { id: string; title: string }[] }>; settings: { theme: string } } | undefined
+      return (u ? rows.get(u.id)?.data : undefined) as { days: Record<string, { mode?: string; statuses: Record<string, string>; blocks: { id: string; title: string }[]; foodLog?: { food?: string; name: string; qty: number; time: string }[] }>; settings: { theme: string }; myFoods?: { id: string; name: string; ai?: boolean }[] } | undefined
     },
     get writes() {
       return writes

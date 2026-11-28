@@ -1,3 +1,4 @@
+import { addDays } from '../time'
 import { describe, expect, it } from 'vitest'
 import { allowedEatOuts, currentSlotId, daySummary, dietAdherence, eatOutsInWeek, mealState, syncEatRight } from '../diet'
 import { normalize } from '../../services/storageService'
@@ -86,13 +87,16 @@ describe('day summary + Eat Right', () => {
     expect(d.days[MON].habits.eatright).toBe(true)
     expect(d.days[WED].habits.eatright).toBe(false) // Wednesday's is now over the allowance
   })
-  it('adherence across days ignores days with no meals logged', () => {
+  it('adherence: once you start tracking, an unlogged past day counts as all skipped', () => {
     const d = fresh()
+    const before = addDays(MON, -1)
+    d.days[before] = { date: before, blocks: [], statuses: {}, habits: {}, updatedAt: 0 } // before tracking began → ignored
     planDay(d, MON)
     planDay(d, TUE, { lunch: { status: 'skipped' } })
-    d.days[WED] = { date: WED, blocks: [], statuses: {}, habits: {}, updatedAt: 0 }
+    d.days[WED] = { date: WED, blocks: [], statuses: {}, habits: {}, updatedAt: 0 } // nothing logged → 0/7
     d.days[MON].water = 12
-    expect(dietAdherence(d, Object.values(d.days))).toEqual({ pct: 93, daysTracked: 2, eatRightDays: 1, waterDays: 1 })
+    expect(dietAdherence(d, Object.values(d.days))).toEqual({ pct: 62, daysTracked: 3, eatRightDays: 1, waterDays: 1 })
+    expect(mealState(d, WED, d.mealPlan.slots[0])).toBe('skipped')
   })
 })
 

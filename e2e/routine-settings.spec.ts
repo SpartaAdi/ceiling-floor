@@ -36,7 +36,8 @@ test('routine editor: add, edit, delete blocks; snapshots protect history', asyn
   await expect(timeline(page)).toContainText('Stretch Break')
   await page.keyboard.press('ArrowLeft')
   await expect(timeline(page)).not.toContainText('Stretch Break')
-  await expect(page.getByText('Ceiling day • 14/14 blocks done')).toBeVisible()
+  await expect(page.getByText('Ceiling day • 0/14 blocks done')).toBeVisible() // nothing was ticked yesterday
+  await expect(page.getByText('Weekday Ceiling • 14 blocks')).toBeVisible()
 
   // Delete (two-step)
   await nav(page, 'Routine').click()

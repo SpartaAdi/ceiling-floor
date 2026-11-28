@@ -1,5 +1,5 @@
 import type { AppData, MealLog, MealOption, MealSlot } from '../types'
-import { FOOD_BY_ID } from '../data/foods'
+import { foodById } from '../data/foods'
 
 /** Estimated nutrition — derived from portions, never typed by the user. */
 export interface Nutrients {
@@ -12,7 +12,7 @@ export const ZERO: Nutrients = { kcal: 0, protein: 0, carbs: 0, fat: 0 }
 export const addN = (a: Nutrients, b: Nutrients): Nutrients => ({ kcal: a.kcal + b.kcal, protein: a.protein + b.protein, carbs: a.carbs + b.carbs, fat: a.fat + b.fat })
 
 export function foodN(foodId: string | undefined, qty: number): Nutrients {
-  const f = foodId ? FOOD_BY_ID[foodId] : undefined
+  const f = foodById(foodId)
   if (!f) return ZERO
   return { kcal: f.kcal * qty, protein: f.protein * qty, carbs: f.carbs * qty, fat: f.fat * qty }
 }
@@ -45,9 +45,14 @@ export function mealItems(slot: MealSlot, log?: MealLog) {
 
 export const mealN = (slot: MealSlot, log?: MealLog) => mealItems(slot, log).reduce((acc, i) => addN(acc, foodN(i.food, i.qty)), ZERO)
 
+/** Total of a list of logged foods (unrecognised notes count as zero). */
+export const foodsN = (list: { food?: string; qty: number }[] = []) => list.reduce((acc, i) => addN(acc, foodN(i.food, i.qty)), ZERO)
+
+/** Everything eaten that day: planned meals + the timed food log. */
 export function dayN(data: AppData, date: string) {
-  const meals = data.days[date]?.meals ?? {}
-  return data.mealPlan.slots.reduce((acc, s) => addN(acc, mealN(s, meals[s.id])), ZERO)
+  const day = data.days[date]
+  const meals = day?.meals ?? {}
+  return addN(data.mealPlan.slots.reduce((acc, s) => addN(acc, mealN(s, meals[s.id])), ZERO), foodsN(day?.foodLog))
 }
 
 export type Range = [number, number]
